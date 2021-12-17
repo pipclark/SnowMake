@@ -1,0 +1,600 @@
+*{  
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Rubik', sans-serif; /*'Kumbh Sans', sans-serif;  */
+}
+
+.navbar {
+    background: #131313;
+    height: 80px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 1.2 rem; /*16 rem per pixel or something */
+    position: sticky;
+    top: 0;
+    z-index: 999;
+}
+
+.navbar__container {
+    display: flex;
+    justify-content: space-between;
+    height: 80px;
+    z-index: 1;
+    width: 100%;
+    max-width: 1300px;
+    margin: 0 auto; /* if put a series of 0 0 0 etc it means top, bottom, right, left */
+    padding: 0 50px
+}
+
+#navbar__logo {
+    background-color: #51b7d6;
+    background-image: linear-gradient(to top, #3566ce 0%, #71d2f0 100%); /* puts gradient in text color */
+    background-size: 100%;
+    background-clip: text; /* this i added because warning that i should also define it for compatability */
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 2rem;
+}
+
+.fa-snowflake { /*this doesn't appear to work*/
+    margin-right: 1.5 rem;
+}
+
+.navbar__menu {
+    display: flex;
+    align-items: center;
+    list-style: none;
+    text-align: center;
+}
+
+.navbar__item {
+    height: 80px;
+}
+
+.navbar__links {
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    padding: 0 1rem;
+    height: 100%;
+}
+
+.navbar__btn {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 0 1rem;
+    width: 100%;
+}
+
+.button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    text-decoration: none;
+    padding: 10px 20px;
+    height: 100%;
+    width: 100%;
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    background: #224197;
+    color: #fff;
+}
+
+.button:hover { /* visual changes when you hover over something */
+    background: #4637e0;
+    transition: all 0.3s ease;
+}
+
+.navbar__links:hover {
+    color: #62e6f7;
+    transition: all 0.3s ease;
+}
+
+@media screen and (max-width: 960px) {
+    .navbar__container {
+        display: flex;
+        justify-content: space-between;
+        height: 80px;
+        z-index: 1;
+        width: 100%;
+        max-width: 1300px;
+        padding: 0;
+    }
+
+    .navbar__menu {
+        display: grid;
+        grid-template-columns: auto;
+        margin: 0;
+        width: 100%;
+        position: absolute;
+        /* hides the navbar_menu above the screen so it only comes down when hover at top */
+        top: -1000px; 
+        opacity: 1; /* also makes it invisible */
+        transition: all 0.5s ease;
+        height: 50vh; /*vport height = % of screen it's taking up*/
+        z-index: -1; 
+        background: #131313;
+    }
+    .navbar__menu.active {
+        background: #131313;
+        top: 100%;
+        opacity: 1;
+        transition: all 0.5s ease;
+        z-index: 99;
+        height: 50vh;
+        font-size: 1.6rem;
+    }
+    #navbar__logo {
+        padding-left: 5px;
+    }
+    .navbar__toggle .bar {
+        width: 25px;
+        height: 3px;
+        margin: 5px auto;
+        transition: all 0.3s ease-in-out;
+        background: #fff;
+    }
+
+    .navbar__item {
+        width: 100%;
+    }
+
+    .navbar__links {
+        text-align: center;
+        padding: 2rem;
+        width: 100%;
+        display: table;
+    }
+    #mobile-menu {
+        position: absolute;
+        top: 20%;
+        right: 5%;
+        transform: translate(5%, 20%);
+    }
+
+    .navbar__btn {
+        padding-bottom: 2rem;
+    }
+    .button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 80%;
+        height: 80px;
+        margin: 0;
+    }
+    .navbar__toggle .bar { /* adds these little 3 line thingy representing menu drop down */
+        display: block;
+        cursor: pointer;
+    }
+    /*this next bit turns the 3 horizontal lines into a cross when the menu is active */
+    #mobile-menu.is-active .bar:nth-child(2) { /* number in brackets is the child you#re targetting in this case bars in the menu logo (first is # 1) */
+        opacity: 0; /*invisible - the middle button disappears*/    
+    }
+    #mobile-menu.is-active .bar:nth-child(1) { /* this is the top bar it rotates down when you click on the button etc */
+        transform: translateY(8px) rotate(45deg);   
+    }
+    #mobile-menu.is-active .bar:nth-child(3) {
+        transform: translateY(-8px) rotate(-45deg);   
+    }
+
+}
+
+/* Gif section */
+.main {
+    background-color: #141414;
+}
+
+.main__container {
+    display: grid;
+    grid-template-columns: lfr lfr;
+    align-items: center;
+    justify-self: center;
+    margin: 0 auto;
+    min-height: 70vh;
+    background-color: #141414;
+    z-index: 1;
+    width: 100%;
+    max-width: 1300px;
+    padding: 10px 50px; /*top/bottom, and left/right*/
+}
+
+.main__content h1 {
+    font-size: 4rem;
+    background-color: #ff8177;
+    background-image: linear-gradient(to top, #0c3a9e 0%, #71d2f0 100%);
+    background-size: 100%;
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+}
+
+.main__content h2 {
+    font-size: 4rem;
+    background-color: #0856ff;
+    background-image: linear-gradient(to top, #0856ff 0%, #99ffd5 100%);
+    background-size: 100%;
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+}
+
+.main__content p {
+    margin-top: 1rem;
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.main__btn {
+    font-size: 1rem;
+    background-image: linear-gradient(to top, #0648ff 0%, #51d6fe 100%);
+    padding: 14px 32px;
+    border: none;
+    border-radius: 4px; /* rounds the button corners*/
+    color: #fff;
+    margin-top: 2rem;
+    margin-bottom: 2rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.35s;
+    outline:none;
+}
+
+.main__btn > * { /*this bit means if you press on another part of the button such as the text it will still treat it as a button click event*/
+    pointer-events: none;
+  }
+
+
+.main__btn a { /*this is for the text*/
+    position: relative; /*stops text getting colored over I think*/
+    z-index: 2; /* important for the hover effects, also stops text getting colored over*/
+    color: #fff;
+    text-decoration: none;
+}
+
+.main__btn:after {
+    position: absolute;
+    content: '';
+    top: 0;
+    left: 0;
+    width: 0;
+    height: 100%;
+    background: #4837ff;   
+    transition: all 0.35s;
+    border-radius: 4px;
+}
+
+.main__btn:hover {
+    color: #fff;
+}
+.main__btn:hover:after {
+    width: 100%;
+}
+
+.main__btn.is-active {
+    position: relative; /*stops text getting colored over I think*/
+    z-index: 2; /* important for the hover effects, also stops text getting colored over*/
+    color: #fff;
+    text-decoration: none;
+}
+.main__btn.is-active:hover {
+    color: #fff;
+}
+
+
+#hiddenmessage {
+    display: none;
+    transition: all 0.5s ease;
+}
+#hiddenmessage.active {
+    display: block;
+    transition: all 0.5s ease;
+}
+
+.main__img--container {
+    text-align: center; 
+
+}
+#main__img {
+    min-height: 80%;
+    width: 100%
+}
+    
+
+
+/* Mobile Response for small screens */
+@media screen and (max-wdith: 1000px) {
+    .main__container {
+        display: grid;
+        grid-template-columns: auto;
+        align-items: center;
+        justify-self: center;
+        width: 100%;
+        margin: 0 auto;
+        min-height: 70vh;
+    }
+    .main__content {
+        text-align: center;
+        margin-bottom: 4rem;
+    }
+    .main__content h1 {
+        font-size: 2.5rem;
+        margin-top: 2rem;
+    }
+    .main__content h2 {
+        font-size: 3rem;
+    }
+    .main__content p {
+        margin-top: 1rem;
+        font-size: 1.5rem;
+    }
+}
+@media screen and (max-width: 480px) {
+    .main__content h1 {
+        font-size: 2rem;
+        margin-top: 1rem;
+    }
+    .main__content h2 {
+        font-size: 2rem;
+    }
+    .main__content p {
+        margin-top: 1rem;
+        font-size: 1.5rem;
+    }
+    .main__btn {
+        padding: 12px 36px;
+        margin: 2.5rem 0;
+    }
+}
+
+/*Services Section CSS */
+.services {
+    background: #141414;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 50vh;
+    /*padding: 12px 36px;*/
+}
+
+.services h1 {
+    background-color: #99ffd5;
+    background-image: linear-gradient(to right, #48cece 0%, #5fc2e0 21%,
+    #105a85 52%, #444dcc 78%, #1c19ad 100%);
+    background-size: 100%;
+    margin-bottom: 5rem;
+    font-size: 2.5rem;
+    -webkit-background-clip: text; /* this bit makes the text take on the gradients not the background, which becomes transparent */
+    -moz-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    margin-top: 1rem;
+    text-align: center;
+}
+.services__container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+.services__card {
+    margin: 1rem;
+    height: 400px;
+    width: 400px;
+    border-radius: 4px;
+    background-image: linear-gradient(to bottom, 
+    rgba(0,0,0,0) 0%,
+    rgba(17, 17, 17, 0.342) 100%), 
+    url('/images/RSQnowords.png');
+    background-size: cover;
+    position: relative;
+    color: #fff;
+}
+.services__card:nth-child(2) {
+    background-image: linear-gradient(to bottom, 
+    rgba(0,0,0,0) 0%,
+    rgba(17,17,17,0.2) 100%), 
+    url('/images/bambinolove.jpg');
+}
+.services h2 {
+    position: absolute;
+    top: 250px;
+    left: 30px;
+}
+.services__card p {
+    position: absolute;
+    top: 290px;
+    left: 30px;
+}
+.services__card button {
+    color: #fff;
+    padding: 10px 20px;
+    border: none;
+    outline: none;
+    border-radius: 4px;
+    background: #f77062;
+    position: absolute;
+    top: 340px;
+    left: 30px;
+    font-size: 1rem;
+    cursor: pointer;
+}
+.services__card:hover {
+    transform: scale(1.075);
+    transition: 0.2s ease-in;
+    cursor: pointer;
+}
+@media screen and (max-width:960px) {
+    .services {
+        min-height: 1200px;
+    }
+    .services h1 {
+        font-size: 2rem;
+        margin-top: 1rem;
+        margin-left: 1rem;
+        margin-right: 1rem;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .services {
+        min-height: 1200px;
+        margin-left: 10px;
+    }
+    .services h1 {
+        font-size: 10px;
+    }
+    .services__card {
+        width: 300px;
+    }
+}
+
+/* Footer CSS */
+.footer__container {
+    background-color: #141414;
+    padding: 5rem 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+#footer__logo {
+    color: #fff;
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 2rem;
+}
+.footer__links {
+    width: 100%;
+    max-width: 1000px;
+    display: flex;
+    justify-content: center;
+}
+.footer__link--items {
+    display: flex;
+}
+.footer__link--items {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    margin: 26px;
+    text-align: left;
+    width: 160px;
+    box-sizing: border-box;
+}
+.footer__link--items h2 {
+    margin-bottom: 16px;
+}
+.footer__link--items > h2 {
+    color: #fff;
+}
+.footer__link--items a {
+    color: #fff;
+    text-decoration: none;
+    margin-bottom: 0.5rem;
+}
+.footer__link--items a:hover {
+    color: #29b4df;
+    transform-origin: 0.3s ease-out;
+}
+
+/* Social Icons */
+
+.social__media {
+    max-width: 1000px;
+    width: 100%;
+}
+.social__media--wrap {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 90%;
+    max-width: 1000px;
+    margin: 5px auto 0 auto;
+}
+.social__icon--link {
+    color: #fff;
+    font-size: 34px;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    width: 240px;
+    text-decoration: none;
+    margin: 10px;
+}
+.social__icon--link:hover {
+    color: #29b4df;
+    transform-origin: 0.3s ease-out;
+}
+.footer__logo {
+    background-color: #10bff5;
+    background-image: linear-gradient(to top, #1898ee 0%, #71d2f0 100%); /* puts gradient in text color */
+    background-size: 100%;
+    background-clip: text; /* this i added because warning that i should also define it for compatability */
+    -webkit-background-clip: text;
+    -moz-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    -moz-text-fill-color: transparent;
+    justify-self: flex-start;
+    margin-left: 0px;
+    cursor: pointer;
+    text-decoration: none;
+    font-size: 2rem;
+    display: flex;
+    align-items: center;
+    margin-bottom: 16px;
+}
+.website__right {
+    color: #fff;
+    margin-left: 2rem;
+    margin-right: 2rem;
+}
+
+@media screen and (max-width: 1200px) {
+    .footer__links {
+        padding-top: 2rem;
+    }
+    #footer__logo {
+        margin-bottom: 5px;
+    }
+    .website__rights {
+        margin-bottom: 2rem;
+        margin-left: 5px;
+    }
+    .footer__link--wrapper {
+        flex-direction: column;
+    }
+    .social__media--wrap {
+        flex-direction: column;
+    }
+    .social__icon--link {
+        flex-direction: column;
+        justify-content: space-between;
+        align-items: center;
+    }
+}
+
+@media screen and (max-width: 480px) {
+    .footer__link--items {
+        margin: 0;
+        padding: 10px;
+        width: 100px;
+    }
+}
