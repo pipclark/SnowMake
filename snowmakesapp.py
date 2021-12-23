@@ -20,15 +20,15 @@ def index():
     return render_template('index.html')
 
 @app.route('/advanced')
-def index():
+def advancedmode():
     return render_template('advanced.html')
 
 @app.route('/howitworks')
-def index():
+def howitworks():
     return render_template('howitworks.html')
 
 @app.route('/about')
-def index():
+def about():
     return render_template('about.html')
 
 
