@@ -11,7 +11,7 @@ snowbutton.addEventListener('click', function() {
     snowbutton.classList.toggle('is-active'); /*. is-active seems to hold it and just active is just while clicking ? toggles between active and normal css */
     snowflakegif.src = "images/growing.gif"
     $.ajax({        
-        url: 'https://adoring-euclid-7a214c.netlify.app/randomflake',
+        url: '/randomflake',
         //url: 'http://127.0.0.1:5000/randomflake',
         type: 'GET',
         contentType: "image/gif",

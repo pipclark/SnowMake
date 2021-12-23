@@ -24,35 +24,40 @@ import itertools
 import os
 from io import StringIO
 
+# =============================================================================
 from flask import Flask, request, json, render_template, make_response
 import base64
 from flask import send_file
 from flask_cors import CORS
-
-#%%
-app = Flask(__name__)
-CORS(app)
-
-@app.route('/randomflake')
-def random_flake_api():
-    print(f'starting growth at {datetime.now()}')
-    growthcons = conditions()
-            
-    flake,corner1,centre1 = flakegrower(growthcons)
-            
-    animationfile = flake_video(flake,corner1,centre1)
-    
-    print('flake made, about to send')
-
-    with open(animationfile, 'rb') as f:
-        image_binary = f.read()
-    print('binary read in, about to delete file and send binary')
-    os.remove(animationfile) # delete file after it's been read
-        
-    response = make_response(base64.b64encode(image_binary))
-    response.headers.set('Content-Type', 'image/gif')
-    response.headers.set('Content-Disposition', 'attachment', filename='image.gif')
-    return response
+# 
+# #%%
+# app = Flask(__name__)
+# CORS(app)
+# 
+# @app.route('/')
+# 
+# 
+# @app.route('/randomflake')
+# def random_flake_api():
+#     print(f'starting growth at {datetime.now()}')
+#     growthcons = conditions()
+#             
+#     flake,corner1,centre1 = flakegrower(growthcons)
+#             
+#     animationfile = flake_video(flake,corner1,centre1)
+#     
+#     print('flake made, about to send')
+# 
+#     with open(animationfile, 'rb') as f:
+#         image_binary = f.read()
+#     print('binary read in, about to delete file and send binary')
+#     os.remove(animationfile) # delete file after it's been read
+#         
+#     response = make_response(base64.b64encode(image_binary))
+#     response.headers.set('Content-Type', 'image/gif')
+#     response.headers.set('Content-Disposition', 'attachment', filename='image.gif')
+#     return response
+# =============================================================================
 
 #%%
 def edge_length4(pts_tup):
@@ -375,5 +380,3 @@ def flake_video(all_flakes_rot,corner1,centre1a):
     return animationfilename
 
 
-if __name__ == "__main__":
-    app.run()
