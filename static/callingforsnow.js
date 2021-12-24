@@ -9,7 +9,7 @@ const snowbuttontext = document.getElementById("main-btn-text")
 snowbutton.addEventListener('click', function() {
     console.log('snow generating button pressed')
     snowbutton.classList.toggle('is-active'); /*. is-active seems to hold it and just active is just while clicking ? toggles between active and normal css */
-    snowflakegif.src = "images/growing.gif"
+    snowflakegif.src = "/static/images/growing.gif"
     $.ajax({        
         url: '/randomflake',
         //url: 'http://127.0.0.1:5000/randomflake',

@@ -24,11 +24,11 @@ import itertools
 import os
 from io import StringIO
 
-# =============================================================================
-from flask import Flask, request, json, render_template, make_response
-import base64
-from flask import send_file
-from flask_cors import CORS
+# =============================================================================#
+# from flask import Flask, request, json, render_template, make_response
+# import base64
+# from flask import send_file
+# from flask_cors import CORS
 # 
 # #%%
 # app = Flask(__name__)
@@ -193,7 +193,7 @@ def flakegrower(growthrecord):
     corner1 = np.array([r, 0])
     centre1a = np.array([0.75*r,3**0.5/4*r])
     
-    edge1 = np.array([centre1a,corner1])
+    edge1 = np.array([0.1*centre1a,0.1*corner1])
     points_tuple = tuple(map(tuple, edge1))
     
     # rotation matrices for branching at +- 60 degrees
@@ -373,9 +373,10 @@ def flake_video(all_flakes_rot,corner1,centre1a):
     dt = dt_now.replace(':', '-') # formatting so it can be used as a file name
     animationfilename = 'snowflakeanimation_'+dt+'.gif'
 
-
+    print('abouttosave')
     #animationfilename.write(str(flakeanimation))
-    flakeanimation.save((animationfilename), writer='imagemagick', fps=10) # could not work out how to save animation.funcanimation object in the binary so saving real file for now and deleting after sending on server
+    #flakeanimation.save((animationfilename), writer='imagemagick', fps=10) # could not work out how to save animation.funcanimation object in the binary so saving real file for now and deleting after sending on server
+    flakeanimation.save((animationfilename), writer=animation.PillowWriter(fps=10)) # could not work out how to save animation.funcanimation object in the binary so saving real file for now and deleting after sending on server
     print('flake animation successfully created')
     return animationfilename
 
