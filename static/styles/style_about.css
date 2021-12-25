@@ -1,4 +1,4 @@
-*{  
+*{
     box-sizing: border-box;
     margin: 0;
     padding: 0;
@@ -120,11 +120,11 @@
         width: 100%;
         position: absolute;
         /* hides the navbar_menu above the screen so it only comes down when hover at top */
-        top: -1000px; 
+        top: -1000px;
         opacity: 1; /* also makes it invisible */
         transition: all 0.5s ease;
         height: 50vh; /*vport height = % of screen it's taking up*/
-        z-index: -1; 
+        z-index: -1;
         background: #131313;
     }
     .navbar__menu.active {
@@ -181,13 +181,13 @@
     }
     /*this next bit turns the 3 horizontal lines into a cross when the menu is active */
     #mobile-menu.is-active .bar:nth-child(2) { /* number in brackets is the child you#re targetting in this case bars in the menu logo (first is # 1) */
-        opacity: 0; /*invisible - the middle button disappears*/    
+        opacity: 0; /*invisible - the middle button disappears*/
     }
     #mobile-menu.is-active .bar:nth-child(1) { /* this is the top bar it rotates down when you click on the button etc */
-        transform: translateY(8px) rotate(45deg);   
+        transform: translateY(8px) rotate(45deg);
     }
     #mobile-menu.is-active .bar:nth-child(3) {
-        transform: translateY(-8px) rotate(-45deg);   
+        transform: translateY(-8px) rotate(-45deg);
     }
 
 }
@@ -274,7 +274,7 @@
     left: 0;
     width: 0;
     height: 100%;
-    background: #4837ff;   
+    background: #4837ff;
     transition: all 0.35s;
     border-radius: 4px;
 }
@@ -306,15 +306,21 @@
     transition: all 0.5s ease;
 }
 
-.main__img--container {
-    text-align: center; 
+.main__txt--container {
+    text-align: center;
 
 }
-#main__img {
+#main__txt {
     min-height: 80%;
     width: 90%
+    font-size: 2rem;
+    color: #fff
 }
-    
+
+#githublink {
+    font-size: 2.5rem;
+    color: #fff}
+
 
 
 /* Mobile Response for small screens */
@@ -396,18 +402,18 @@
     height: 400px;
     width: 400px;
     border-radius: 4px;
-    background-image: linear-gradient(to bottom, 
+    background-image: linear-gradient(to bottom,
     rgba(0,0,0,0) 0%,
-    rgba(17, 17, 17, 0.342) 100%), 
+    rgba(17, 17, 17, 0.342) 100%),
     url("/static/images/RSQnowords.png");
     background-size: cover;
     position: relative;
     color: #fff;
 }
 .services__card:nth-child(2) {
-    background-image: linear-gradient(to bottom, 
+    background-image: linear-gradient(to bottom,
     rgba(0,0,0,0) 0%,
-    rgba(17,17,17,0.2) 100%), 
+    rgba(17,17,17,0.2) 100%),
     url("/static/images/bambinolove.jpg");
 }
 .services h2 {
