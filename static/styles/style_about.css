@@ -321,9 +321,20 @@
     text-align:center !important;
     }
 
+@media screen and (max-width:1000px) {
+        .main__txt--container {
+            font-size: 1rem;
+            line-height: 30px;
+        }
+
+@media screen and (max-width:480px) {
+        .main__txt--container {
+            font-size: 0.75rem;
+            line-height: 25px;
+        }
 
 /* Mobile Response for small screens */
-@media screen and (max-wdith: 1000px) {
+@media screen and (max-width: 1000px) {
     .main__container {
         display: grid;
         grid-template-columns: auto;
