@@ -18,7 +18,7 @@
     <body>
         <nav class="navbar">
             <div class="navbar__container">
-                <a href="/" id="navbar__logo"> <i class="fas fa-snowflake"></i></i> SNOWMAKES</a>
+                <a href="/" id="navbar__logo"> <i class="fas fa-snowflake"></i> SNOWMAKES</a>
                 <div class="navbar__toggle" id="mobile-menu">
                     <span class="bar"></span> <!-- this is the 3 bars as menu button-->
                     <span class="bar"></span>
@@ -55,18 +55,41 @@
                 <div class="main__content">
                     <h1>HOW IT</h1>
                     <h2>WORKS</h2>
-                    <p>How unique is snowmakes?</p>
+                    <p>How unique are snowmakes' snowflakes?</p>
 
                 </div>
                 <div class="main__txt--container" id="main__txt_container">
 
-                   <!--<img src="{{ url_for('static',filename='images/flakespace.png') }}" id="main__img">-->
-                    <p id="main__txt"> <br> Details coming soon ;)
-
-
-
+                    <p id="main__txt"> Snowmakes generates 2D snowflakes that is loosely based on the science of how snowflakes really form. Here's what happens when you click "Make me a Snowflake!"
+                    Since snow is formed in a cloud (where there's plenty of water vapor that can condense into ice), first it makes the temperature and humidity (amount of water vapor) profile of the cloud, based on data from nimbostratus clouds (the grey ones) that produce snow. Humidity is then converted to relative humidity and the amount of supersaturated water vapor present (clouds form when the water vapor concentration is supersaturated/relative humidity is > 100%, otherwise the water would remain as vapor).
+                    Some random noise is added to the temperature and humidity profiles and the starting height of the snowflake in the cloud is also randomly chosen. This reflects how each snowflake takes a different path through the cloud, a key aspect in why each snowflake is unique. <br>
+                        <br>
+                    The snowflake starts as a hexagonal shape, due to the hexagonal crystal structure of ice.
+                        Since snowflakes have 6 sided symmetry, I just started with 2 points, on the corner and face of the hexagon, and at the end of each growth step add the other 5 sides by rotating by 60 degrees each time.
+                        Next the growth profile of the snowflake is generated from the temperature and humidity profiles as the flake falls through the cloud, where at each step down in height the snowflake can either GROW, STRETCH, or BRANCH. The probability of these 3 growth types is weighted dependent on the temperature and humidity at each height. This was based on the <a href="http://www.snowcrystals.com/morphology/SnowflakeMorphology2med.jpg">Snow Crystal Morphology diagram</a> (but excluding 3D shapes, for now).
+                        <br>
+                        What each type of growth does in some more detail:<br>
+                        <br>
+                        GROW - All parts of the snowflake grow, proportional to the amount of excess water vapor (relative humidity). The corners of the hexagon grow faster than the centre faces due to it requiring less energy for the water molecules to stick there, and so the hexagon transforms to a 6 pointed star shape. <br>
+                        <br>
+                        STRETCH - The outward 6 corners stretch outwards but the centre points do not change.<br>
+                        <br>
+                        BRANCH - The outward 6 corner points each split into 3 branches: 2 at 60 degrees to each other, and the central one remaining. These new branches now grow in the GROW conditions. After a snowflake has branched, the probability weighting of BRANCH is reduced, proportional to how many steps ago the previous BRANCH was. This was to limit chains of consecutive branching, which I don't think are observed in real snowflakes!
+                        The branching also required 2 additional points for each branch along the main limb of the snowflake (which I called branch_origin). The width of the branch (distance between the branch origins) increases with the snowflake size up to a limit. I observed this in some snowflakes I looked at but not all. <br>
+                        <br>
+                        There can also be no growth, if the humidity is too low and so water vapor will not condense onto the snowflake (relative humidity is less than 100%) ie when the snowflake has left the cloud.<br>
+                        <br>
+                        For each height step as the snowflake falls through the cloud, the coordinates of the snowflake points are recorded.
+                        After rotating to add the points for all 6 sides (mentioned above) the snowflake is drawn by connecting each consecutive point with a curved line. For this reason it was important to get all the points in order, to avoid crossed lines!
+                        Each drawing is added as a frame to an animation.
+                        The animation gif is then sent to you so you can see your snowmake growing!
+                        By the end of the animation, your snowflake has fallen to sea level.
+                        With all the random parts and 100 steps to the snowmake journey, each one should be unique.
+                        If you want more details on snowflake growth, and other fun snow facts, please check out the Real Science Questions podcast episode linked below!
+                        <br> <br>
+                        <a href="https://github.com/pipclark/SnowMake" id="githublink">You can also check out the code on github</a>
                     </p>
-                <a href="https://github.com/pipclark/SnowMake" id="githublink">Check out the code on github</a>
+                
                 </div>
             </div>
         </div>
@@ -99,7 +122,7 @@
                     <div class="social__media--wrap">
                         <div class="footer__logo">
                             <a href="/" id="footer__logo"> <i class="fas fa-snowflake"></i>
-                                 SNOWMAKE</a>
+                                 SNOWMAKES</a>
                         </div>
                         <p class="website__right">Designed for fun by Pip Clark</p>
 

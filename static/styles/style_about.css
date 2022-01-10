@@ -297,30 +297,29 @@
 }
 
 
-#hiddenmessage {
-    display: none;
-    transition: all 0.5s ease;
-}
-#hiddenmessage.active {
-    display: block;
-    transition: all 0.5s ease;
-}
-
 .main__txt--container {
-    text-align: center;
+    text-align: left;
+    font-size: 1.5rem;
+    line-height: 35px;
+
 
 }
 #main__txt {
     min-height: 80%;
-    width: 90%
-    font-size: 2rem;
-    color: #fff
+    width: 90%;
+    background-color: #eeeeee;
+    color: #000000;
+    padding: 20px;
+    border-radius: 10px;
+    
+
 }
 
 #githublink {
-    font-size: 2.5rem;
-    color: #fff}
-
+    font-size: 2rem;
+    color: #000000;
+    text-align:center !important;
+    }
 
 
 /* Mobile Response for small screens */
@@ -414,7 +413,7 @@
     background-image: linear-gradient(to bottom,
     rgba(0,0,0,0) 0%,
     rgba(17,17,17,0.2) 100%),
-    url("/static/images/bambinolove.jpg");
+    url("/static/images/underconstruction.png");
 }
 .services h2 {
     position: absolute;

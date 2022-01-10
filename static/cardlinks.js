@@ -7,6 +7,6 @@ photo1.addEventListener('click', function() {
     } );
 
 photo2.addEventListener('click', function() {
-    window.open('/tech.html');
+    window.open('/advanced');
     } );
 
