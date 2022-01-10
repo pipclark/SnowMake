@@ -24,40 +24,6 @@ import itertools
 import os
 from io import StringIO
 
-# =============================================================================#
-# from flask import Flask, request, json, render_template, make_response
-# import base64
-# from flask import send_file
-# from flask_cors import CORS
-# 
-# #%%
-# app = Flask(__name__)
-# CORS(app)
-# 
-# @app.route('/')
-# 
-# 
-# @app.route('/randomflake')
-# def random_flake_api():
-#     print(f'starting growth at {datetime.now()}')
-#     growthcons = conditions()
-#             
-#     flake,corner1,centre1 = flakegrower(growthcons)
-#             
-#     animationfile = flake_video(flake,corner1,centre1)
-#     
-#     print('flake made, about to send')
-# 
-#     with open(animationfile, 'rb') as f:
-#         image_binary = f.read()
-#     print('binary read in, about to delete file and send binary')
-#     os.remove(animationfile) # delete file after it's been read
-#         
-#     response = make_response(base64.b64encode(image_binary))
-#     response.headers.set('Content-Type', 'image/gif')
-#     response.headers.set('Content-Disposition', 'attachment', filename='image.gif')
-#     return response
-# =============================================================================
 
 #%%
 def edge_length4(pts_tup):
@@ -107,14 +73,22 @@ def curved_lines(x_vals,y_vals): # make curve lines between all points even if t
     
     return x_curve, y_curve
 
-def conditions():
+def conditions(options=''):
+    if options != '':
+        starth = int(options['height'])
+        startRHu = int(options['humidity'])
+        branchopt = options['branchopt']
+    else:
+        starth = 2500 + 2500 * np.random.default_rng().random()
+        startRHu = 113
+
     c0 = 2000  # bottom of cloud height, m
     h0 = 5000  # starting height of cloud top of snowflake
     delta_h = 50 # change in height for updating snow flake
     T_h0 = -40 # top of cloud T
     T_c0 = -6 # bottom of cloud T
     T_0 = -5*np.random.default_rng().random() # ground T randomly generated between 0 to -5
-    starth = 2500+2500*np.random.default_rng().random()
+
     
     
     m_p = 1.67262191E-27 # kg
@@ -127,14 +101,14 @@ def conditions():
     T = np.append(T, np.linspace(T_c0,T_0, num=round((c0/delta_h))+1))
     
     startidx = find_nearest(h,starth)
-    
+    #print(startidx)
     Tnoise = np.random.normal(0,1,len(T)) # (mean, standard deviation, length)
     T = T+Tnoise
     
     VP_H2O = (0.0052*T**3 + 0.7445*T**2 + 35.976*T + 598.87) 
     sinwavperiod = (round((h0-c0)/delta_h))*np.random.default_rng().random()
     RHux = np.linspace(0,(round((h0-c0)/delta_h)),num=(round((h0-c0)/delta_h)))
-    RHu = 113 + 4*np.sin(RHux/sinwavperiod)
+    RHu = startRHu + 4*np.sin(RHux/sinwavperiod)
     RHu_cloudnoise = np.random.normal(0,1.2,round((h0-c0)/delta_h))
     
     RHu = RHu+RHu_cloudnoise
@@ -158,7 +132,7 @@ def conditions():
     
     b=0
     growthrecord = [0,0]
-    for i in range(0,len(T)):
+    for i in range(startidx,len(T)):
         shape_line = -0.0004*T[i]**2 - 0.0164*T[i] + 0.0051
         #print(shape_line)
         if sat_dens_H2O[i] < 0:
@@ -182,11 +156,20 @@ def conditions():
         growthrate = sat_dens_H2O[i]*abs(T[i])**0.5*np.random.default_rng().random() # also a random element to growth. Colder temperatures snow growth a bit higher, and also linear on density of water vapor
         growthrecord = np.vstack([growthrecord, [growthtype,growthrate]])
         
-    growthrecord = np.delete(growthrecord, obj=0, axis=0) # deletes that initial row of 0s 
-    
-    return growthrecord
+    growthrecord = np.delete(growthrecord, obj=0, axis=0) # deletes that initial row of 0s.
+    #print(len(growthrecord[:,]))
+    if options != '':
+        return growthrecord, T, over100RHu, startidx, h
+    else:
+        return growthrecord
 
-def flakegrower(growthrecord):
+def flakegrower(growthrecord,options = ''):
+
+    branchopt = 0 # default
+    if options != '':
+        branchopt = options['branchopt']
+
+
     l = 1
     r = l/2
         
@@ -211,7 +194,9 @@ def flakegrower(growthrecord):
     all_flakes = [np.copy(edge1)] # first one is the hexagon
     
     br = 0
+
     for g in range(0,len(growthrecord[:,])):
+
         edge_length = (2*edge_length4(points_tuple))**0.5
         area = growthrecord[g,1]/6 #  /6 because it's doing it on 6 sides
         #print(edge_length,area)
@@ -237,12 +222,17 @@ def flakegrower(growthrecord):
                                 brgrowth = br*area/edge_length # update the growth rate only on the even numbers so that the +- pairs grow equally
                                     
                                 if np.allclose((e-branch_origin[bra])/np.linalg.norm(e-branch_origin[bra]),
-                                               branchvs[bra]/np.linalg.norm(branchvs[bra]),rtol=1e-05) == True:                               
-                                    if abs(e[1]+brgrowth*branchvs[bra][1]) < (e[0]+brgrowth**branchvs[bra][0])*0.42: # stop the branches from crossing over. (I thought it should be < x*0.577 / tan30 but seems to still cross)
-                                        e += brgrowth*branchvs[bra]
+                                               branchvs[bra]/np.linalg.norm(branchvs[bra]),rtol=1e-05) == True:
+                                    if branchopt != 1:
+                                        #print('branchgrowthstopable')
+                                        if abs(e[1]+brgrowth*branchvs[bra][1]) < (e[0]+brgrowth**branchvs[bra][0])*0.42: # stop the branches from crossing over. (I thought it should be < x*0.577 / tan30 but seems to still cross)
+                                            e += brgrowth * branchvs[bra]
+                                        else:
+                                            pass
                                     else:
-                                        pass
-                    #print(g,e,br)
+                                        e += brgrowth*branchvs[bra]
+
+
                                     
             if br > 0:
                     for i in range(0,len(edge1)):
@@ -374,10 +364,54 @@ def flake_video(all_flakes_rot,corner1,centre1a):
     animationfilename = 'snowflakeanimation_'+dt+'.gif'
 
     print('abouttosave')
-    #animationfilename.write(str(flakeanimation))
-    #flakeanimation.save((animationfilename), writer='imagemagick', fps=10) # could not work out how to save animation.funcanimation object in the binary so saving real file for now and deleting after sending on server
     flakeanimation.save((animationfilename), writer=animation.PillowWriter(fps=10)) # could not work out how to save animation.funcanimation object in the binary so saving real file for now and deleting after sending on server
     print('flake animation successfully created')
     return animationfilename
+
+
+def othergraphs_animation(g,xdata,y1data,y2data,h,T,over100RHu,line1,line2):
+    xdata.append(h[g])
+    y1data.append(T[g])
+    y2data.append(over100RHu[g] + 100)
+    line1.set_xdata(xdata)
+    line1.set_ydata(y1data)
+    line2.set_xdata(xdata)
+    line2.set_ydata(y2data)
+
+    return line1, line2
+
+def conditions_video(h, T, over100RHu, startidx):
+
+    xdata, y1data, y2data = [], [], []
+
+    fig, ax1 = plt.subplots()
+    ax1.set_xlabel('Altitude (m)')
+    ax1.set_ylabel('Temperature (degrees celcius)', color='r')
+    ax2 = ax1.twinx()  #
+    ax2.set_ylabel('Relative Humidity %', color='b')
+
+    ax1.set_xlim(0, h[startidx])
+    ax1.set_ylim(min(T), max(T))
+    ax1.invert_xaxis()
+    ax2.set_ylim(min(over100RHu) + 100, max(over100RHu) + 100)
+    line1, = ax1.plot(h[startidx], T[startidx], linestyle='', marker='x', color='r')
+    line2, = ax2.plot(h[startidx], T[startidx], linestyle='', marker='x', color='b')
+
+    othergraphsanimation = animation.FuncAnimation(fig, func=othergraphs_animation,
+                                                   frames=np.arange(startidx, len(T), 1), interval=100,
+                                                   repeat=True, fargs=(xdata,y1data,y2data,h,T,over100RHu,line1,line2) ) # interval in ms, frames is the i values
+
+
+    # to hard save file:
+    dt_now = str(datetime.now())
+    dt_now = dt_now[:19]  # current time up to the seconds
+    dt = dt_now.replace(':', '-')  # formatting so it can be used as a file name
+    extragraphsfilename = 'extraanimation_' + dt + '.gif'
+
+    print('abouttosaveextragraphs')
+    othergraphsanimation.save((extragraphsfilename), writer=animation.PillowWriter(fps=10))  # could not work out how to save animation.funcanimation object in the binary so saving real file for now and deleting after sending on server
+    print('extragraphs animation successfully created')
+    return extragraphsfilename
+
 
 

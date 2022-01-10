@@ -61,7 +61,10 @@
                 <div class="main__txt--container" id="main__txt_container">
 
                     <p id="main__txt"> Snowmakes generates 2D snowflakes that is loosely based on the science of how snowflakes really form. Here's what happens when you click "Make me a Snowflake!"
-                    Since snow is formed in a cloud (where there's plenty of water vapor that can condense into ice), first it makes the temperature and humidity (amount of water vapor) profile of the cloud, based on data from nimbostratus clouds (the grey ones) that produce snow. Humidity is then converted to relative humidity and the amount of supersaturated water vapor present (clouds form when the water vapor concentration is supersaturated/relative humidity is > 100%, otherwise the water would remain as vapor).
+                    Since snow is formed in a cloud (where there's plenty of water vapor that can condense into ice), first it makes the temperature and humidity (amount of water vapor in the air) profile of the cloud, based on data from nimbostratus clouds (the grey ones) that produce snow. Humidity is then converted to relative humidity (the humidity relative to the maximum amount the air should* be able to hold (100% relative humidity), which depends on temperature). 
+                    <br>
+                    *Actually relative humidity can go above 100% and does so in clouds, making them supersaturated with water vapor present. Clouds are visible because some of that super saturated water vapor has condensed into liquid droplets or ice crystals, which may only happen due to the presence of impurities that give a surface the water can condense onto (such as dust or pollution).
+                    <br>
                     Some random noise is added to the temperature and humidity profiles and the starting height of the snowflake in the cloud is also randomly chosen. This reflects how each snowflake takes a different path through the cloud, a key aspect in why each snowflake is unique. <br>
                         <br>
                     The snowflake starts as a hexagonal shape, due to the hexagonal crystal structure of ice.

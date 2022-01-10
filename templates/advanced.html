@@ -5,7 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>Snowflake Generator Website</title>
-        <link rel="stylesheet" href="{{ url_for('static',filename='styles/style_about.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static',filename='styles/style_advanced.css') }}">
         <link rel="preconnect" href="https://fonts.googleapis.com">
         <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
         <link href="https://fonts.googleapis.com/css2?family=Kumbh+Sans&display=swap" rel="stylesheet">
@@ -49,23 +49,55 @@
             </div>
         </nav>
 
-        <!-- Bla section-->
+        <!-- Main section-->
         <div class="main">
             <div class="main__container">
                 <div class="main__content">
                     <h1>SNOWMAKES</h1>
                     <h2>ADVANCED</h2>
-                    <p>Coming soon</p>
+                    <p>More Control, less random, more fun?</p>
+                    
 
                 </div>
                 <div class="main__txt--container" id="main__txt_container">
-
-                   <!--<img src="{{ url_for('static',filename='images/flakespace.png') }}" id="main__img">-->
-                    <p id="main__txt"> Check back here soon and you'll be able to play with the
-                        height (/temperature) in the cloud your snowflake starts growing at and the humidity (water
-                        vapor supersaturation) around it, this will effect how likely it is to branch!
+                    <br>
+                    <p id="main__txt"> Play with the starting
+                        height of your snowflake in the cloud (which affects temperature) and the humidity (water
+                        vapor supersaturation) in the cloud, and see how this affects the snowmakes result. Note that
+                        the higher up in the cloud your snowflake starts it's journey, the longer it will take to fall to you (/load).
+                        The bottom of the cloud is set to 2000m, below this the relative humidity will fall below 100% and the snowflake will stop growing.
+                        Check out the graphs of temperature and humidity for the coniditons you set below.
 
                     </p>
+                </div>
+                <div class="controls">
+                    
+                    <label for="height">Start Height:</label>
+                    <input id="height" type="range" name="height" min="2000" max="5000" value="2000" oninput="this.nextElementSibling.value = this.value">
+                    <output>2000</output><span>m. </span>
+                    
+                    <br><br> 
+
+                    <label for="humidity">Relative Humidity:</label>
+                    <input id="humidity" type="range" name="humidity" min="100" max="150" value="100" oninput="this.nextElementSibling.value = this.value">
+                    <output>100</output><span >%. </span>
+
+                    <br><br>
+
+                    <label for="branchswitch">Overlapping Branches allowed:</label>
+                    <input id="branchswitch" type="checkbox" name="branchswitch" value="0">
+                    <span class="sliderround"></span>
+                </div>
+
+                <button class="main__btn" id="main-btn"><a href="/" id="main-btn-text">Make me a Snowflake!</a></button>
+                <div class="main__img--container" id="main__img_container">
+                    
+                    <img src="{{ url_for('static',filename='images/flakespace.png') }}" id="main__img">
+                </div>
+                <button class="main__btn" id="graph-btn"><a href="/" id="graph-btn-text">Show me the Temperature and Humidity Graphs</a></button>
+                <div class="main__img--container" id="second__img_container">
+                    
+                    <img src="{{ url_for('static',filename='images/graphspace.png') }}" id="second__img">
                 </div>
             </div>
         </div>
@@ -132,7 +164,8 @@
         </div>
 
         <script src="{{url_for('static', filename='app.js')}}"></script> <!-- need it to call the javascript for animating the button -->
-        <script src="{{url_for('static', filename='callingforsnow.js')}}"></script>
+        <!--<script src="{{url_for('static', filename='callingforsnow.js')}}"></script>-->
         <script src="{{url_for('static', filename='cardlinks.js')}}"></script>
+        <script src="{{url_for('static', filename='advsettings.js')}}"></script>
         <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
 </html>

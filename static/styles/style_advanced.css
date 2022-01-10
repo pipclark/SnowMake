@@ -297,15 +297,6 @@
 }
 
 
-#hiddenmessage {
-    display: none;
-    transition: all 0.5s ease;
-}
-#hiddenmessage.active {
-    display: block;
-    transition: all 0.5s ease;
-}
-
 .main__img--container {
     text-align: center; 
 
@@ -314,7 +305,61 @@
     min-height: 80%;
     width: 90%
 }
-    
+#second__img {
+    min-height: 80%;
+    width: 90%
+}
+
+.main__txt--container {
+    text-align: left;
+    font-size: 1.5rem;
+    line-height: 35px;
+
+
+}
+#main__txt {
+    min-height: 80%;
+    width: 90%;
+    background-color: #eeeeee;
+    color: #000000;
+    padding: 20px;
+    border-radius: 10px;
+}
+
+.row {
+    white-space: nowrap;
+  }
+  
+  .row > div {
+    width: 300px;
+    display: inline-block;
+  }
+
+/* advanced controllers plain CSS (not updating) */
+.controls {
+    margin-top: 50px;
+    margin-bottom: 50px;
+    font-size: 1.5rem;
+    color: #fff;
+  }
+  
+
+
+input {
+    width: 150px;
+  }
+
+:root {
+    --height: 2000;
+    --humidity: 100;
+}
+
+.livevals::before {
+    color: rgb(0, 195, 255);
+    content: " (" --height ")";
+    /*content: --humidity;*/
+}
+
 
 
 /* Mobile Response for small screens */
@@ -344,6 +389,8 @@
         font-size: 1.5rem;
     }
 }
+
+
 @media screen and (max-width: 480px) {
     .main__content h1 {
         font-size: 2.5rem;
@@ -408,7 +455,7 @@
     background-image: linear-gradient(to bottom, 
     rgba(0,0,0,0) 0%,
     rgba(17,17,17,0.2) 100%), 
-    url("/static/images/advancedmode.png");
+    url("/static/images/underconstruction.png");
     object-fit: cover;
 }
 .services h2 {
