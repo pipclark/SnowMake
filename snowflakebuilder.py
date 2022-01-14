@@ -386,9 +386,9 @@ def conditions_video(h, T, over100RHu, startidx):
 
     fig, ax1 = plt.subplots()
     ax1.set_xlabel('Altitude (m)')
-    ax1.set_ylabel('Temperature (degrees celcius)', color='r')
+    ax1.set_ylabel('Temperature ($^\circ$ C)', color='r', fontsize = 20)
     ax2 = ax1.twinx()  #
-    ax2.set_ylabel('Relative Humidity %', color='b')
+    ax2.set_ylabel('Relative Humidity %', color='b', fontsize = 20)
 
     ax1.set_xlim(0, h[startidx])
     ax1.set_ylim(min(T), max(T))
