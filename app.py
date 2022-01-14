@@ -47,14 +47,14 @@ def random_flake_api():
         growthcons, T, over100RHu, startidx, h = conditions(options)
 
         flake, corner1, centre1 = flakegrower(growthcons,options)
+        animationfile = flake_video(flake, corner1, centre1,options)
 
 
 
     else:
         growthcons = conditions()
         flake,corner1,centre1 = flakegrower(growthcons)
-            
-    animationfile = flake_video(flake,corner1,centre1)
+        animationfile = flake_video(flake,corner1,centre1)
     
     print('flake made, about to send')
 

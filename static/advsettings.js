@@ -9,14 +9,6 @@ const graphbutton = document.getElementById("graph-btn")
 const graphgif = document.getElementById("second__img")
 const graphbuttontext = document.getElementById("graph-btn-text")
 
-function sendvalues() {
-    console.log(this.value);
-    console.log(this.name);
-    
-    
-}
-
-
 snowbutton.addEventListener('click', function() {
     console.log('snow generating button pressed')
     snowbutton.classList.toggle('is-active'); /*. is-active seems to hold it and just active is just while clicking ? toggles between active and normal css */
@@ -27,15 +19,17 @@ snowbutton.addEventListener('click', function() {
         height: null,
         humidity: null,
         branchopt: 0,
+        sizeopt: 0,
     }
     inputdata.height = document.getElementById('height').value;
     inputdata.humidity = document.getElementById('humidity').value;
     if(document.getElementById('branchswitch').checked){
         inputdata.branchopt = 1;
     }
-    
-    //const inputs = document.querySelectorAll('.controls input').values;
-    //inputs.forEach(input => input.value(sendvalues));
+    if(document.getElementById('sizeswitch').checked){
+        inputdata.sizeopt = 1;
+    }
+
     console.log(inputdata);
 
     $.ajax({

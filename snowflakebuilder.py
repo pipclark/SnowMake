@@ -201,49 +201,43 @@ def flakegrower(growthrecord,options = ''):
         area = growthrecord[g,1]/6 #  /6 because it's doing it on 6 sides
         #print(edge_length,area)
         if growthrecord[g,0] == ['none']:
-            blob = 1
-        if growthrecord[g,0] == ['normal']: 
-            if br >= 0: # realised this one (originally br =0) unneccesary just need branch conditions later but i didn't want to delete all the tabbings
-                for e in edge1:
-                    #print(e/np.linalg.norm(e))
-                    if np.allclose(e/np.linalg.norm(e),corner1/np.linalg.norm(corner1),rtol=1e-05) == True: # allclose works better than array_equal because has tolerance incase of stupid float maths
-                        e += 10.1*area/edge_length*corner1#/np.linalg.norm(corner1)
-                        #print('c')
-                    elif np.allclose(e/np.linalg.norm(e),centre1a/np.linalg.norm(centre1a),rtol=1e-05) == True:
-                        if br < 1:
-                            e += 1*area/edge_length*centre1a
-                        if br >= 1:
-                            e += 0.1*area/edge_length*centre1a # slow down centre faces of starting hexagon growth after branched
-                   
-                    if br > 0: # add branch points growth
-                            for bra in range(0,len(branchvs)):
-                                #if bra % 2 == 0: # adding random aspect to branch growth, didn't work so well
-                                    #brgrowth = br*2*np.random.default_rng().random()*area/edge_length # update the growth rate only on the even numbers so that the +- pairs grow equally
-                                brgrowth = br*area/edge_length # update the growth rate only on the even numbers so that the +- pairs grow equally
-                                    
-                                if np.allclose((e-branch_origin[bra])/np.linalg.norm(e-branch_origin[bra]),
-                                               branchvs[bra]/np.linalg.norm(branchvs[bra]),rtol=1e-05) == True:
-                                    if branchopt != 1:
-                                        #print('branchgrowthstopable')
-                                        if abs(e[1]+brgrowth*branchvs[bra][1]) < (e[0]+brgrowth**branchvs[bra][0])*0.42: # stop the branches from crossing over. (I thought it should be < x*0.577 / tan30 but seems to still cross)
-                                            e += brgrowth * branchvs[bra]
-                                        else:
-                                            pass
-                                    else:
-                                        e += brgrowth*branchvs[bra]
+            pass
+        if growthrecord[g,0] == ['normal']:
+            for e in edge1:
+                normalised_e_vector = e/np.linalg.norm(e)
+                # checks for points (e) with the same direction vector as the original corner point (from origin) then grows it
+                if np.allclose(normalised_e_vector,corner1/np.linalg.norm(corner1),rtol=1e-05) == True: # allclose works better than array_equal because has tolerance incase of stupid float maths
+                    e += 10.1*area/edge_length*corner1
+                # checks for points (e) with the same direction vector as the original centre point (from origin) then grows it
+                elif np.allclose(normalised_e_vector,centre1a/np.linalg.norm(centre1a),rtol=1e-05) == True:
+                    if br < 1:
+                        e += 1*area/edge_length*centre1a
+                    else:
+                        e += 0.1*area/edge_length*centre1a # slow down centre faces of starting hexagon growth after branched
+
+                if br > 0: # add branch points growth
+                    for bra in range(0,len(branchvs)):
+                        brgrowth = br*area/edge_length # update the growth rate only on the even numbers so that the +- pairs grow equally
+
+                        # finds the points in the branching directions
+                        if np.allclose((e-branch_origin[bra])/np.linalg.norm(e-branch_origin[bra]),
+                                       branchvs[bra]/np.linalg.norm(branchvs[bra]),rtol=1e-05) == True:
+                            # advanced mode branches overlapping option is when branchopt == 1
+                            if branchopt != 1 and abs(e[1]+brgrowth*branchvs[bra][1]) > (e[0]+brgrowth**branchvs[bra][0])*0.42: # stop the branches from crossing over. (I thought it should be < x*0.577 / tan30 but seems to still cross)
+                                pass
+                            else:
+                                e += brgrowth*branchvs[bra]
 
 
-                                    
+            #this part grows the branch origins outwards too
             if br > 0:
-                    for i in range(0,len(edge1)):
-                        if np.allclose(edge1[i],edget[i],rtol=1e-07) == True:
-                            #print(edge1[i],edget[i],g)
-                            if edge1[i][1] > 0:
-                                edge1[i] += 1.2*area/edge_length*(np.array((0,1)))
-                                
-                                #print(edge1)
-                            elif edge1[i][1] < 0:
-                                edge1[i] += 1.2*area/edge_length*(np.array((0,-1)))
+                for i in range(0,len(edge1)):
+                    if np.allclose(edge1[i],edget[i],rtol=1e-07) == True:
+                        if edge1[i][1] > 0:
+                            edge1[i] += 1.2*area/edge_length*(np.array((0,1)))
+
+                        elif edge1[i][1] < 0:
+                            edge1[i] += 1.2*area/edge_length*(np.array((0,-1)))
                                 
         if growthrecord[g,0] == ['stretch']: #just make it so that only outer corners grow
             for e in edge1:
@@ -325,7 +319,7 @@ def snowflake_animation(g,all_flakes_rot,snowflake):#,points_tuple,br,growthreco
     
         return snowflake,#points_tuple,br,edge1,growthrecord,branch_origin,branchvs,edget,
 
-def flake_video(all_flakes_rot,corner1,centre1a):
+def flake_video(all_flakes_rot,corner1,centre1a,options=''):
     x_values = []
     y_values = []
     Rottemp = np.array([centre1a,corner1])
@@ -343,11 +337,16 @@ def flake_video(all_flakes_rot,corner1,centre1a):
     fig, ax = plt.subplots()
 
     ax.set_xlim(-1.2*np.max(all_flakes_rot[-1]),1.2*np.max(all_flakes_rot[-1]))
-    ax.set_ylim(-1.2*np.max(all_flakes_rot[-1]),1.2*np.max(all_flakes_rot[-1]))    
+    ax.set_ylim(-1.2*np.max(all_flakes_rot[-1]),1.2*np.max(all_flakes_rot[-1]))
+    if options != '':
+        sizeopt = options['sizeopt']
+        if sizeopt == 1:
+            ax.set_xlim(-10,10)
+            ax.set_ylim(-10,10)
     ax.set_facecolor('k')
     ax.axes.get_xaxis().set_visible(False)
     ax.axes.get_yaxis().set_visible(False)
-    snowflake, = ax.plot(x_c, y_c,linewidth=1.5)
+    snowflake, = ax.plot(x_c, y_c,linewidth=1)
     #snowflake, = ax.fill_between(x_values, y_values,color=[(0.8,0.9,1)])
 
   
