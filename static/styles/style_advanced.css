@@ -253,6 +253,7 @@
     position: relative;
     transition: all 0.35s;
     outline:none;
+    width: 40%;
 }
 
 .main__btn > * { /*this bit means if you press on another part of the button such as the text it will still treat it as a button click event*/

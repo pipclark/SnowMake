@@ -20,6 +20,7 @@ function sendvalues() {
 snowbutton.addEventListener('click', function() {
     console.log('snow generating button pressed')
     snowbutton.classList.toggle('is-active'); /*. is-active seems to hold it and just active is just while clicking ? toggles between active and normal css */
+    snowbutton.disabled = true;
     snowflakegif.src = "/static/images/growing.gif"
 
     var inputdata = { // set up dictionary for sending data
@@ -46,6 +47,7 @@ snowbutton.addEventListener('click', function() {
         success: function(result) {
             console.log('posted inputs to server to generate and send snow flake')
             snowflakegif.src = 'data:image/gif;base64,' + result;
+            snowbutton.disabled = false;
         }
     })
    
@@ -58,6 +60,7 @@ graphbutton.addEventListener('click', function() {
     console.log('graph generating button pressed')
     graphbutton.classList.toggle('is-active'); /*. is-active seems to hold it and just active is just while clicking ? toggles between active and normal css */
     graphgif.src = "/static/images/graphforming.gif"
+    graphbutton.disabled = true;
 
     var inputdata = { // set up dictionary for sending data
         height: null,
@@ -83,6 +86,7 @@ graphbutton.addEventListener('click', function() {
         success: function(result) {
             console.log('posted inputs to server to generate and send snow flake')
             graphgif.src = 'data:image/gif;base64,' + result;
+            graphbutton.disabled = false;
         }
     })
    
