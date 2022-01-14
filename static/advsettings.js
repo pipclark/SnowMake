@@ -38,8 +38,8 @@ snowbutton.addEventListener('click', function() {
     console.log(inputdata);
 
     $.ajax({
-        //url: '/randomflake',
-        url: 'http://127.0.0.1:5000/randomflake',
+        url: '/randomflake',
+        //url: 'http://127.0.0.1:5000/randomflake',
         type: 'POST',
         data: JSON.stringify(inputdata),
         contentType: "image/gif",
@@ -75,8 +75,8 @@ graphbutton.addEventListener('click', function() {
     console.log(inputdata);
 
     $.ajax({
-        //url: '/randomflake',
-        url: 'http://127.0.0.1:5000/advflakegraphs',
+        url: '/advflakegraphs',
+        //url: 'http://127.0.0.1:5000/advflakegraphs',
         type: 'POST',
         data: JSON.stringify(inputdata),
         contentType: "image/gif",
