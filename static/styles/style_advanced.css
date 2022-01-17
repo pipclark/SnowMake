@@ -364,7 +364,7 @@ input {
 
 
 /* Mobile Response for small screens */
-@media screen and (max-wdith: 1000px) {
+@media screen and (max-width: 1000px) {
     .main__container {
         display: grid;
         grid-template-columns: auto;
@@ -389,6 +389,10 @@ input {
         margin-top: 1rem;
         font-size: 1.5rem;
     }
+
+    .main__txt--container {
+        font-size: 1rem;
+    }
 }
 
 
@@ -407,6 +411,9 @@ input {
     .main__btn {
         padding: 12px 36px;
         margin: 2.5rem 0;
+    }
+    .main__txt--container {
+        font-size: 0.75rem;
     }
 }
 

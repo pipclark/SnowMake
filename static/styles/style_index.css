@@ -318,7 +318,7 @@
 
 
 /* Mobile Response for small screens */
-@media screen and (max-wdith: 1000px) {
+@media screen and (max-width: 1000px) {
     .main__container {
         display: grid;
         grid-template-columns: auto;
@@ -359,6 +359,7 @@
     .main__btn {
         padding: 12px 36px;
         margin: 2.5rem 0;
+        width: 80%;
     }
 }
 
