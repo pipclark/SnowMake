@@ -418,7 +418,7 @@ def grow_centre_and_corner_points(area, centre1a, corner1, edge_length, number_o
     return point
 
 
-def snowflake_animation(g, all_flakes_rot, snowflake):
+def generate_snowflake_animation_points(g, all_flakes_rot, snowflake):
     x_values = []
     y_values = []
     for s in all_flakes_rot[g]:
@@ -433,57 +433,52 @@ def snowflake_animation(g, all_flakes_rot, snowflake):
     return snowflake
 
 
-def flake_video(all_flakes_rot, corner1, centre1a, options=''):
+def generate_snowflake_gif(all_flakes_rotated, corner1, centre1a, options=''):
     x_values = []
     y_values = []
-    Rottemp = np.array([centre1a, corner1])
     for n in range(1, 6):
         theta = np.radians(60 * n)
-        c, s = np.cos(theta), np.sin(theta)
-        R = np.array(((c, -s), (s, c)))
-    for e in range(0, len(all_flakes_rot[0])):
-        x_values = np.append(x_values, all_flakes_rot[0][e][0])
-        y_values = np.append(y_values, all_flakes_rot[0][e][1])
-    x_values = np.append(x_values, all_flakes_rot[0][0][0])  # complete the pattern
-    y_values = np.append(y_values, all_flakes_rot[0][0][1])
+    for e in range(0, len(all_flakes_rotated[0])):
+        x_values = np.append(x_values, all_flakes_rotated[0][e][0])
+        y_values = np.append(y_values, all_flakes_rotated[0][e][1])
+    x_values = np.append(x_values, all_flakes_rotated[0][0][0])  # complete the pattern
+    y_values = np.append(y_values, all_flakes_rotated[0][0][1])
     x_c, y_c = curved_lines(x_values, y_values)
 
     fig, ax = plt.subplots()
 
-    ax.set_xlim(-1.2 * np.max(all_flakes_rot[-1]), 1.2 * np.max(all_flakes_rot[-1]))
-    ax.set_ylim(-1.2 * np.max(all_flakes_rot[-1]), 1.2 * np.max(all_flakes_rot[-1]))
+    ax.set_xlim(-1.2 * np.max(all_flakes_rotated[-1]), 1.2 * np.max(all_flakes_rotated[-1]))
+    ax.set_ylim(-1.2 * np.max(all_flakes_rotated[-1]), 1.2 * np.max(all_flakes_rotated[-1]))
     if options != '':
-        sizeopt = options['sizeopt']
-        if sizeopt == 1:
+        size_options = options['sizeopt']
+        if size_options == 1:
             ax.set_xlim(-10, 10)
             ax.set_ylim(-10, 10)
     ax.set_facecolor('k')
     ax.axes.get_xaxis().set_visible(False)
     ax.axes.get_yaxis().set_visible(False)
     snowflake, = ax.plot(x_c, y_c, linewidth=1)
-    # snowflake, = ax.fill_between(x_values, y_values,color=[(0.8,0.9,1)])
 
-    flakeanimation = animation.FuncAnimation(fig, func=snowflake_animation,
-                                             frames=np.arange(0, len(all_flakes_rot), 1),
-                                             interval=100, fargs=(
-            all_flakes_rot, snowflake,))  # interval in ms, frames is the i values
-    # plt.show
+    flake_animation = animation.FuncAnimation(fig, func=generate_snowflake_animation_points,
+                                              frames=np.arange(0, len(all_flakes_rotated), 1),
+                                              interval=100, fargs=(
+            all_flakes_rotated, snowflake,))  # interval in ms, frames is the i values
     plt.close()
 
     # to hard save file:
     dt_now = str(datetime.now())
     dt_now = dt_now[:19]  # current time up to the seconds
     dt = dt_now.replace(':', '-')  # formatting so it can be used as a file name
-    animationfilename = 'snowflakeanimation_' + dt + '.gif'
+    animation_filename = 'snowflakeanimation_' + dt + '.gif'
 
-    print('abouttosave')
-    flakeanimation.save((animationfilename), writer=animation.PillowWriter(
-        fps=10))  # could not work out how to save animation.funcanimation object in the binary so saving real file for now and deleting after sending on server
+    print('about to save animation')
+    flake_animation.save((animation_filename), writer=animation.PillowWriter(
+        fps=10))
     print('flake animation successfully created')
-    return animationfilename
+    return animation_filename
 
 
-def othergraphs_animation(g, xdata, y1data, y2data, h, T, over100RHu, line1, line2):
+def generate_conditions_graph_lines(g, xdata, y1data, y2data, h, T, over100RHu, line1, line2):
     xdata.append(h[g])
     y1data.append(T[g])
     y2data.append(over100RHu[g] + 100)
@@ -495,7 +490,7 @@ def othergraphs_animation(g, xdata, y1data, y2data, h, T, over100RHu, line1, lin
     return line1, line2
 
 
-def conditions_video(h, T, over100RHu, startidx):
+def generate_conditions_video(h, T, over100RHu, startidx):
     xdata, y1data, y2data = [], [], []
 
     fig, ax1 = plt.subplots()
@@ -511,7 +506,7 @@ def conditions_video(h, T, over100RHu, startidx):
     line1, = ax1.plot(h[startidx], T[startidx], linestyle='', marker='x', color='r')
     line2, = ax2.plot(h[startidx], T[startidx], linestyle='', marker='x', color='b')
 
-    othergraphsanimation = animation.FuncAnimation(fig, func=othergraphs_animation,
+    other_graphs_animation = animation.FuncAnimation(fig, func=generate_conditions_graph_lines,
                                                    frames=np.arange(startidx, len(T), 1), interval=100,
                                                    repeat=True, fargs=(
             xdata, y1data, y2data, h, T, over100RHu, line1, line2))  # interval in ms, frames is the i values
@@ -520,10 +515,10 @@ def conditions_video(h, T, over100RHu, startidx):
     dt_now = str(datetime.now())
     dt_now = dt_now[:19]  # current time up to the seconds
     dt = dt_now.replace(':', '-')  # formatting so it can be used as a file name
-    extragraphsfilename = 'extraanimation_' + dt + '.gif'
+    extra_graphs_filename = 'extraanimation_' + dt + '.gif'
 
-    print('abouttosaveextragraphs')
-    othergraphsanimation.save((extragraphsfilename), writer=animation.PillowWriter(
-        fps=10))  # could not work out how to save animation.funcanimation object in the binary so saving real file for now and deleting after sending on server
-    print('extragraphs animation successfully created')
-    return extragraphsfilename
+    print('about to save conditions graphs')
+    other_graphs_animation.save((extra_graphs_filename), writer=animation.PillowWriter(
+        fps=10))
+    print('conditions graphs animation successfully created')
+    return extra_graphs_filename

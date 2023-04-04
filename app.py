@@ -8,7 +8,7 @@ Created on Thu Dec 23 17:04:54 2021
 from flask import Flask, request, json, render_template, make_response, send_file
 import base64
 from flask_cors import CORS
-from snowflakebuilder import generate_path_conditions, grow_snowflakes_along_path, flake_video, conditions_video, othergraphs_animation
+from snowflakebuilder import generate_path_conditions, grow_snowflakes_along_path, generate_snowflake_gif, generate_conditions_video, generate_conditions_graph_lines
 from datetime import datetime
 import os
 import ast
@@ -51,7 +51,7 @@ def random_flake_api():
         growth_conditions, T, over100RHu, startidx, h = generate_path_conditions(options)
 
         flake, corner1, centre1 = grow_snowflakes_along_path(growth_conditions, options)
-        animation_file = flake_video(flake, corner1, centre1, options)
+        animation_file = generate_snowflake_gif(flake, corner1, centre1, options)
 
     else:
         # randomly generate growth conditions
@@ -59,7 +59,7 @@ def random_flake_api():
         # grow the snowflake - find
         flake, corner1, centre1 = grow_snowflakes_along_path(growth_conditions)
         # turn the growth
-        animation_file = flake_video(flake, corner1, centre1)
+        animation_file = generate_snowflake_gif(flake, corner1, centre1)
 
     print('flake made, about to send')
 
@@ -84,7 +84,7 @@ def adv_graphs_api():
         print(options)
 
         growthcons, T, over100RHu, startidx, h = generate_path_conditions(options)
-        extra_graphs_file = conditions_video(h, T, over100RHu, startidx)
+        extra_graphs_file = generate_conditions_video(h, T, over100RHu, startidx)
     else:
         print('no advanced inputs recieved')
 
