@@ -1,35 +1,25 @@
 # -*- coding: utf-8 -*-
 """
-Created on Mon Dec 13 22:29:38 2021
-
-@author: pcjcl
-"""
-
-# -*- coding: utf-8 -*-
-"""
 Created on Fri Dec  3 18:02:21 2021
 
 @author: pcjcl
 """
 
-import requests
-import math
 import numpy as np
 import matplotlib.pyplot as plt
 import random
 import matplotlib.animation as animation
 from datetime import datetime
 import itertools
-import os
-from io import StringIO
 
 
 # %%
-def edge_length4(pts_tup):
+def calculate_total_edge_length(coordinates):
     length = 0
-    for p in range(1, len(pts_tup)):
-        length += ((pts_tup[p][0] - pts_tup[p - 1][0]) ** 2 + (
-                pts_tup[p][1] - pts_tup[p - 1][1]) ** 2) ** 0.5  # add up the differences between all the points
+    for p in range(1, len(coordinates)):
+        # add up the differences between all the points
+        length += ((coordinates[p][0] - coordinates[p - 1][0]) ** 2 + (
+                coordinates[p][1] - coordinates[p - 1][1]) ** 2) ** 0.5
 
     return length
 
@@ -41,13 +31,14 @@ def find_nearest(array, value):
 
 
 def curved_lines(x_vals,
-                 y_vals):  # make curve lines between all points even if they go back and forth on grid rather than in order
+                 y_vals):
+    # make curve lines between all points even if they go back and forth on grid rather than in order
     x_curve = []
     y_curve = []
     for i in range(0, len(x_vals) - 1):
 
+        # solution to quadratic equation
         b = (x_vals[i + 1] - x_vals[i]) / 2 + x_vals[i]
-
         a = -1
         c = (b - x_vals[i]) ** 2
 
@@ -57,6 +48,7 @@ def curved_lines(x_vals,
         elif y_vals[i + 1] > y_vals[i] and x_vals[i + 1] <= x_vals[i]:
             a = 1
             c = -(b - x_vals[i]) ** 2
+
         # normalise bulge (height of quadratic part) by the length of the line
         length = ((y_vals[i + 1] - y_vals[i]) ** 2 + (x_vals[i + 1] - x_vals[i]) ** 2) ** 0.5
         norm = length ** 0.3 / (abs(c) * 20)
@@ -109,6 +101,7 @@ def generate_path_conditions(options=''):
                                                                                      temperature_path)
 
     # transform the temperature saturated water density path into growth_record array
+    # form is [[growth_type, growth_rate]], TODO refactor into object
     growth_record = transform_temperature_and_water_density_to_growth_record(saturation_density_H2O_path, start_idx,
                                                                              temperature_path)
 
@@ -179,7 +172,6 @@ def generate_water_saturation_density_path(height_increment, height_path, k, m_h
     p_H2O = relative_humidity_cloud * vapour_pressure_H2O / 100  # in Pa
     saturation_pressure_H2O = over100RHu / 100 * vapour_pressure_H2O
     # T in K remember, * 1000 makes it into grams
-    density_H2O = m_h2o * p_H2O / (k * (temperature_path + 273.15)) * 1000
     saturation_density_H2O_path = m_h2o * saturation_pressure_H2O / (k * (temperature_path + 273.15)) * 1000
     return over100RHu, saturation_density_H2O_path
 
@@ -196,157 +188,234 @@ def generate_temperature_path(ground_temperature, height_increment, max_cloud_he
     return temperature_path
 
 
-def flake_grower(growth_record, options=''):
+def grow_snowflakes_along_path(growth_record, options=''):
     branch_options = 0  # default
     if options != '':
         branch_options = options['branchopt']
 
-    l = 1
-    r = l / 2
+    initial_radius_length = 1 / 2
 
-    corner1 = np.array([r, 0])
-    centre1a = np.array([0.75 * r, 3 ** 0.5 / 4 * r])
+    corner1 = np.array([initial_radius_length, 0])
+    centre1a = np.array([0.75 * initial_radius_length, 3 ** 0.5 / 4 * initial_radius_length])
 
-    edge1 = np.array([0.1 * centre1a, 0.1 * corner1])
-    points_tuple = tuple(map(tuple, edge1))
+    flake_points_coordinates_np = np.array([0.1 * centre1a, 0.1 * corner1])
+    flake_points_coordinates_tuple = tuple(map(tuple, flake_points_coordinates_np))
 
     # rotation matrices for branching at +- 60 degrees
-    R1 = np.array(((np.cos(np.radians(60)), -np.sin(np.radians(60))),
-                   (np.sin(np.radians(60)), np.cos(np.radians(60)))))
-    R2 = np.array(((np.cos(np.radians(-60)), -np.sin(np.radians(-60))),
-                   (np.sin(np.radians(-60)), np.cos(np.radians(-60)))))
-    branch1v = np.matmul(corner1 / np.linalg.norm(corner1), R2)
-    branch2v = np.matmul(corner1 / np.linalg.norm(corner1), R1)
-    branchvs = np.array((1, 1))
+    Rotate_plus60 = np.array(((np.cos(np.radians(60)), -np.sin(np.radians(60))),
+                              (np.sin(np.radians(60)), np.cos(np.radians(60)))))
+    Rotate_minus60 = np.array(((np.cos(np.radians(-60)), -np.sin(np.radians(-60))),
+                               (np.sin(np.radians(-60)), np.cos(np.radians(-60)))))
+    # reflection in x-axis matrix
+    Reflect_in_x = np.array(((1, 0), (0, -1)))
+
+    branch_direction1_vector = np.matmul(corner1 / np.linalg.norm(corner1), Rotate_minus60)
+    branch_direction2_vector = np.matmul(corner1 / np.linalg.norm(corner1), Rotate_plus60)
+    branch_vectors = np.array((1, 1))
     branch_origin = np.array((1, 1))
-    Refx = np.array(((1, 0), (0, -1)))  # reflect in the x axis
-    stretch = np.zeros([100, 2])
 
-    all_flakes = [np.copy(edge1)]  # first one is the hexagon
+    all_flakes = [np.copy(flake_points_coordinates_np)]  # first one is the hexagon
 
-    br = 0
+    number_of_branches = 0
 
-    for g in range(0, len(growth_record[:, ])):
-
-        edge_length = (2 * edge_length4(points_tuple)) ** 0.5
-        area = growth_record[g, 1] / 6  # /6 because it's doing it on 6 sides
-        # print(edge_length,area)
-        if growth_record[g, 0] == ['none']:
+    for idx in range(0, len(growth_record[:, ])):
+        edge_length = (2 * calculate_total_edge_length(flake_points_coordinates_tuple)) ** 0.5
+        area = growth_record[idx, 1] / 6  # /6 because it's doing it on 6 sides
+        if growth_record[idx, 0] == ['none']:
             pass
-        if growth_record[g, 0] == ['normal']:
-            for e in edge1:
-                normalised_e_vector = e / np.linalg.norm(e)
-                # checks for points (e) with the same direction vector as the original corner point (from origin) then grows it
-                if np.allclose(normalised_e_vector, corner1 / np.linalg.norm(corner1),
-                               rtol=1e-05) == True:  # allclose works better than array_equal because has tolerance incase of stupid float maths
-                    e += 10.1 * area / edge_length * corner1
-                # checks for points (e) with the same direction vector as the original centre point (from origin) then grows it
-                elif np.allclose(normalised_e_vector, centre1a / np.linalg.norm(centre1a), rtol=1e-05) == True:
-                    if br < 1:
-                        e += 1 * area / edge_length * centre1a
-                    else:
-                        e += 0.1 * area / edge_length * centre1a  # slow down centre faces of starting hexagon growth after branched
+        if growth_record[idx, 0] == ['normal']:
+            for point in flake_points_coordinates_np:
+                point = grow_centre_and_corner_points(area, centre1a, corner1, edge_length, number_of_branches, point)
 
-                if br > 0:  # add branch points growth
-                    for bra in range(0, len(branchvs)):
-                        brgrowth = br * area / edge_length  # update the growth rate only on the even numbers so that the +- pairs grow equally
-
-                        # finds the points in the branching directions
-                        if np.allclose((e - branch_origin[bra]) / np.linalg.norm(e - branch_origin[bra]),
-                                       branchvs[bra] / np.linalg.norm(branchvs[bra]), rtol=1e-05) == True:
-                            # advanced mode branches overlapping option is when branchopt == 1
-                            if branch_options != 1 and abs(e[1] + brgrowth * branchvs[bra][1]) > (
-                                    e[0] + brgrowth ** branchvs[bra][
-                                0]) * 0.42:  # stop the branches from crossing over. (I thought it should be < x*0.577 / tan30 but seems to still cross)
-                                pass
-                            else:
-                                e += brgrowth * branchvs[bra]
+                if number_of_branches > 0:  # add branch points growth
+                    for branch_number in range(0, len(branch_vectors)):
+                        grow_existing_branches(area, branch_number, branch_options, branch_origin, branch_vectors,
+                                               edge_length, number_of_branches, point)
 
             # this part grows the branch origins outwards too
-            if br > 0:
-                for i in range(0, len(edge1)):
-                    if np.allclose(edge1[i], edget[i], rtol=1e-07) == True:
-                        if edge1[i][1] > 0:
-                            edge1[i] += 1.2 * area / edge_length * (np.array((0, 1)))
+            if number_of_branches > 0:
+                grow_origins_of_branches(area, edge_length, edget, flake_points_coordinates_np)
 
-                        elif edge1[i][1] < 0:
-                            edge1[i] += 1.2 * area / edge_length * (np.array((0, -1)))
+        if growth_record[idx, 0] == ['stretch']:  # just make it so that only outer corners grow
+            for point in flake_points_coordinates_np:
+                if np.allclose(point / np.linalg.norm(point), corner1 / np.linalg.norm(corner1), rtol=1e-05) == True:
+                    point += 0.5 * area * corner1  # stretch the corner points
 
-        if growth_record[g, 0] == ['stretch']:  # just make it so that only outer corners grow
-            for e in edge1:
-                if np.allclose(e / np.linalg.norm(e), corner1 / np.linalg.norm(corner1), rtol=1e-05) == True:
-                    e += 0.5 * area * corner1  # stretch the corner points
+        if growth_record[idx, 0] == ['branch']:
+            branch_origin, branch_vectors, edget, flake_points_coordinates_np, number_of_branches = create_new_branch(
+                Reflect_in_x, area, branch_direction1_vector, branch_direction2_vector, branch_origin, branch_vectors,
+                corner1,
+                edge_length, flake_points_coordinates_np, number_of_branches)
 
-        if growth_record[g, 0] == ['branch']:
-            for e in range(0, len(edge1)):
-                if np.allclose(edge1[e] / np.linalg.norm(edge1[e]), corner1 / np.linalg.norm(corner1),
-                               rtol=1e-05) == True:  # branching off centre line only. can add elifs for branches branching later
-                    # print(e)
-                    brwidth = 1 / edge1[e][
-                        0]  # normalise branch width by the value (length) of e (stops the branches getting out of control chunk as the snowflake grows)
-                    if brwidth > 0.15:
-                        brwidth = 0.14
-                    # print(brwidth)
-                    branch_origin = np.vstack([branch_origin, [(0.85 + brwidth / 2) * (edge1[e] - edge1[0]) + edge1[0]],
-                                               [np.matmul((0.85 + brwidth / 2) * (edge1[e] - edge1[0]) + edge1[0],
-                                                          Refx)]])
+        flake_points_coordinates_tuple = tuple(map(tuple, flake_points_coordinates_np))  # overwrite points tuple
+        all_flakes.append(np.copy(flake_points_coordinates_np))
 
-                    edget = np.copy(edge1)
-                    # print(edget)
-                    if br < 1:
-                        edget = np.delete(edget, e,
-                                          axis=0)  # remove the original corner for now so it can bet put in the middle of the branches axis = 0 makes it keep its shape
-                        edget = np.vstack([edget, [0.85 * (edge1[e] - edge1[0]) + edge1[0]],
-                                           [((0.85 + brwidth / 2) * (edge1[e] - edge1[0]) + edge1[
-                                               0] + branch1v * area / edge_length)],
-                                           [(0.85 + brwidth) * (edge1[e] - edge1[0]) + edge1[0]],
-                                           [edge1[e]],
-                                           [np.matmul((0.85 + brwidth) * (edge1[e] - edge1[0]) + edge1[0], Refx)],
-                                           [(np.matmul((0.85 + brwidth / 2) * (edge1[e] - edge1[0]) + edge1[0],
-                                                       Refx) + branch2v * area / edge_length)],
-                                           [np.matmul(0.85 * (edge1[e] - edge1[0]) + edge1[0], Refx)]])
-                        edge1 = np.copy(edget)
-                        # print(edget)
+    all_flakes_with_rotation = rotate_6_times_to_finish_snowflakes(all_flakes)
 
-                    elif br >= 1:
-                        edget = np.delete(edget, np.s_[e:len(edge1)],
-                                          axis=0)  # delete outer point corner point on x axis and everything after it
-                        # print(edget)
-                        # put in the new branch coordinates as before with the outer point in the centre
-                        edget = np.vstack([edget, [0.85 * (edge1[e] - edge1[0]) + edge1[0]],
-                                           [((0.85 + brwidth / 2) * (edge1[e] - edge1[0]) + edge1[
-                                               0] + branch1v * area / edge_length)],
-                                           [(0.85 + brwidth) * (edge1[e] - edge1[0]) + edge1[0]], [edge1[e]],
-                                           [np.matmul((0.85 + brwidth) * (edge1[e] - edge1[0]) + edge1[0], Refx)],
-                                           [(np.matmul((0.85 + brwidth / 2) * (edge1[e] - edge1[0]) + edge1[0],
-                                                       Refx) + branch2v * area / edge_length)],
-                                           [np.matmul(0.85 * (edge1[e] - edge1[0]) + edge1[0], Refx)]])
-                        # put the rest of the points you deleted back in
-                        for k in range(e + 1, len(edge1)):
-                            edget = np.vstack([edget, [edge1[k]]])
-                        edge1 = np.copy(edget)
-                    branchvs = np.vstack([branchvs, [branch1v], [branch2v]])  # add the growth vectors to vs
-                    break
+    return all_flakes_with_rotation, corner1, centre1a
 
-            br += 1
 
-        points_tuple = tuple(map(tuple, edge1))  # overwrite points tuple
-        all_flakes.append(np.copy(edge1))
-
-    all_flakes_rot = []
-
+def rotate_6_times_to_finish_snowflakes(all_flakes):
+    all_flakes_with_rotation = []
     for f in all_flakes:
-        Rottemp = f
+        temporary_rotated_flake = f
         for n in range(1, 6):
             theta = np.radians(60 * n)
             c, s = np.cos(theta), np.sin(theta)
             R = np.array(((c, -s), (s, c)))
-            for e in f:
-                Rottemp = np.vstack([Rottemp, [np.matmul(e, R)]])
+            for point in f:
+                temporary_rotated_flake = np.vstack([temporary_rotated_flake, [np.matmul(point, R)]])
 
-        all_flakes_rot.append(np.copy(Rottemp))
+        all_flakes_with_rotation.append(np.copy(temporary_rotated_flake))
+    return all_flakes_with_rotation
 
-    return all_flakes_rot, corner1, centre1a
+
+def create_new_branch(Reflect_in_x, area, branch_direction1_vector, branch_direction2_vector, branch_origin,
+                      branch_vectors,
+                      corner1, edge_length, flake_points_coordinates_np, number_of_branches):
+    for point in range(0, len(flake_points_coordinates_np)):
+        # branching off centre line only. can add elifs for branches branching from branches later
+        if np.allclose(flake_points_coordinates_np[point] / np.linalg.norm(flake_points_coordinates_np[point]),
+                       corner1 / np.linalg.norm(corner1),
+                       rtol=1e-05):
+            # normalise branch width by the value (length) of e
+            # (stops the branches getting out of control chunk as the snowflake grows)
+            branch_width = 1 / flake_points_coordinates_np[point][
+                0]
+            if branch_width > 0.15:
+                branch_width = 0.14
+            branch_origin = np.vstack([branch_origin, [
+                (0.85 + branch_width / 2) * (flake_points_coordinates_np[point] - flake_points_coordinates_np[0]) +
+                flake_points_coordinates_np[0]],
+                                       [np.matmul((0.85 + branch_width / 2) * (
+                                               flake_points_coordinates_np[point] - flake_points_coordinates_np[
+                                           0]) + flake_points_coordinates_np[0],
+                                                  Reflect_in_x)]])
+
+            temporary_points_coordinates = np.copy(flake_points_coordinates_np)
+            if number_of_branches < 1:
+                # remove the original corner for now
+                # so it can be put in the middle of the branches axis = 0 makes it keep its shape
+                temporary_points_coordinates = np.delete(temporary_points_coordinates, point, axis=0)
+                temporary_points_coordinates = np.vstack([temporary_points_coordinates, [
+                    0.85 * (flake_points_coordinates_np[point] - flake_points_coordinates_np[0]) +
+                    flake_points_coordinates_np[0]],
+                                                          [((0.85 + branch_width / 2) * (
+                                                                  flake_points_coordinates_np[point] -
+                                                                  flake_points_coordinates_np[0]) +
+                                                            flake_points_coordinates_np[
+                                                                0] + branch_direction1_vector * area / edge_length)],
+                                                          [(0.85 + branch_width) * (
+                                                                  flake_points_coordinates_np[point] -
+                                                                  flake_points_coordinates_np[0]) +
+                                                           flake_points_coordinates_np[0]],
+                                                          [flake_points_coordinates_np[point]],
+                                                          [np.matmul((0.85 + branch_width) * (
+                                                                  flake_points_coordinates_np[point] -
+                                                                  flake_points_coordinates_np[0]) +
+                                                                     flake_points_coordinates_np[0], Reflect_in_x)],
+                                                          [(np.matmul((0.85 + branch_width / 2) * (
+                                                                  flake_points_coordinates_np[point] -
+                                                                  flake_points_coordinates_np[0]) +
+                                                                      flake_points_coordinates_np[0],
+                                                                      Reflect_in_x) + branch_direction2_vector * area / edge_length)],
+                                                          [np.matmul(
+                                                              0.85 * (flake_points_coordinates_np[point] -
+                                                                      flake_points_coordinates_np[0]) +
+                                                              flake_points_coordinates_np[0], Reflect_in_x)]])
+                flake_points_coordinates_np = np.copy(temporary_points_coordinates)
+
+            elif number_of_branches >= 1:
+                # delete outer point corner point on x-axis and everything after it
+                temporary_points_coordinates = np.delete(temporary_points_coordinates,
+                                                         np.s_[point:len(flake_points_coordinates_np)],
+                                                         axis=0)
+
+                # put in the new branch coordinates as before with the outer point in the centre
+                temporary_points_coordinates = np.vstack([temporary_points_coordinates, [
+                    0.85 * (flake_points_coordinates_np[point] - flake_points_coordinates_np[0]) +
+                    flake_points_coordinates_np[0]],
+                                                          [((0.85 + branch_width / 2) * (
+                                                                  flake_points_coordinates_np[point] -
+                                                                  flake_points_coordinates_np[0]) +
+                                                            flake_points_coordinates_np[
+                                                                0] + branch_direction1_vector * area / edge_length)],
+                                                          [(0.85 + branch_width) * (
+                                                                  flake_points_coordinates_np[point] -
+                                                                  flake_points_coordinates_np[0]) +
+                                                           flake_points_coordinates_np[0]],
+                                                          [flake_points_coordinates_np[point]],
+                                                          [np.matmul((0.85 + branch_width) * (
+                                                                  flake_points_coordinates_np[point] -
+                                                                  flake_points_coordinates_np[0]) +
+                                                                     flake_points_coordinates_np[0], Reflect_in_x)],
+                                                          [(np.matmul((0.85 + branch_width / 2) * (
+                                                                  flake_points_coordinates_np[point] -
+                                                                  flake_points_coordinates_np[0]) +
+                                                                      flake_points_coordinates_np[0],
+                                                                      Reflect_in_x) + branch_direction2_vector *
+                                                            area / edge_length)],
+                                                          [np.matmul(
+                                                              0.85 * (flake_points_coordinates_np[point] -
+                                                                      flake_points_coordinates_np[0]) +
+                                                              flake_points_coordinates_np[0], Reflect_in_x)]])
+                # put the rest of the points you deleted back in
+                for k in range(point + 1, len(flake_points_coordinates_np)):
+                    temporary_points_coordinates = np.vstack(
+                        [temporary_points_coordinates, [flake_points_coordinates_np[k]]])
+                flake_points_coordinates_np = np.copy(temporary_points_coordinates)
+            branch_vectors = np.vstack(
+                [branch_vectors, [branch_direction1_vector], [branch_direction2_vector]])  # add the growth vectors
+            break
+    number_of_branches += 1
+    return branch_origin, branch_vectors, temporary_points_coordinates, flake_points_coordinates_np, number_of_branches
+
+
+def grow_existing_branches(area, branch_number, branch_options, branch_origin, branch_vectors, edge_length,
+                           number_of_branches, point):
+    # update the growth rate only on the even numbers so that the +- pairs grow equally
+    branch_growth = number_of_branches * area / edge_length
+    # finds the points in the branching directions
+    if np.allclose((point - branch_origin[branch_number]) / np.linalg.norm(point - branch_origin[branch_number]),
+                   branch_vectors[branch_number] / np.linalg.norm(branch_vectors[branch_number]), rtol=1e-05):
+        # advanced mode branches overlapping option is when branchopt == 1
+        if branch_options != 1 and abs(point[1] + branch_growth * branch_vectors[branch_number][1]) > (
+                point[0] + branch_growth ** branch_vectors[branch_number][
+            0]) * 0.42:
+            # stop the branches from crossing over.
+            # (I thought it should be < x*0.577 / tan30 but seems to still cross)
+            pass
+        else:
+            # grow the branches without restriction
+            point += branch_growth * branch_vectors[branch_number]
+
+
+def grow_origins_of_branches(area, edge_length, edget, flake_points_coordinates_np):
+    for i in range(0, len(flake_points_coordinates_np)):
+        if np.allclose(flake_points_coordinates_np[i], edget[i], rtol=1e-07):
+            if flake_points_coordinates_np[i][1] > 0:
+                flake_points_coordinates_np[i] += 1.2 * area / edge_length * (np.array((0, 1)))
+
+            elif flake_points_coordinates_np[i][1] < 0:
+                flake_points_coordinates_np[i] += 1.2 * area / edge_length * (np.array((0, -1)))
+
+
+def grow_centre_and_corner_points(area, centre1a, corner1, edge_length, number_of_branches, point):
+    # checks for points with the same direction vector as the original CORNER point
+    # (from origin) then grows it
+    normalised_e_vector = point / np.linalg.norm(point)
+    # allclose works better than array_equal because has tolerance in case of stupid float maths
+    if np.allclose(normalised_e_vector, corner1 / np.linalg.norm(corner1),
+                   rtol=1e-05):
+        point += 10.1 * area / edge_length * corner1
+    # checks for points (e) with the same direction vector as the original CENTRE point (from origin) then grows it
+    elif np.allclose(normalised_e_vector, centre1a / np.linalg.norm(centre1a), rtol=1e-05):
+        if number_of_branches < 1:
+            point += 1 * area / edge_length * centre1a
+        else:
+            # slow down centre faces of starting hexagon growth after first branch
+            point += 0.1 * area / edge_length * centre1a
+    return point
 
 
 def snowflake_animation(g, all_flakes_rot, snowflake):
