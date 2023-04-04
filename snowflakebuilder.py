@@ -29,7 +29,7 @@ def edge_length4(pts_tup):
     length = 0
     for p in range(1, len(pts_tup)):
         length += ((pts_tup[p][0] - pts_tup[p - 1][0]) ** 2 + (
-                    pts_tup[p][1] - pts_tup[p - 1][1]) ** 2) ** 0.5  # add up the differences between all the points
+                pts_tup[p][1] - pts_tup[p - 1][1]) ** 2) ** 0.5  # add up the differences between all the points
 
     return length
 
@@ -76,101 +76,130 @@ def curved_lines(x_vals,
     return x_curve, y_curve
 
 
-def conditions(options=''):
+def generate_path_conditions(options=''):
+    # physical constants
+    min_cloud_height = 2000  # bottom of cloud height, m above sesa level
+    max_cloud_height = 5000  # starting height of cloud top of snowflake, m
+    height_increment = 50  # change in height for updating snowflake, m
+    temperature_at_cloud_top = -40  # top of cloud T, degrees C
+    temperature_at_cloud_bottom = -6  # bottom of cloud T, degrees C
+    ground_temperature = -5 * np.random.default_rng().random()  # ground T randomly generated between 0 to -5
+    m_p = 1.67262191E-27  # mass of proton, kg
+    m_h2o = 18 * m_p  # mass of water molecule
+    k = 1.38064852E-23  # Boltzman constant
+
     if options != '':
-        starth = int(options['height'])
-        startRHu = int(options['humidity'])
-        branchopt = options['branchopt']
+        start_height = int(options['height'])
+        start_relative_humidity = int(options['humidity'])
     else:
-        starth = 2500 + 2500 * np.random.default_rng().random()
-        startRHu = 113
+        start_height = 2500 + 2500 * np.random.default_rng().random()
+        start_relative_humidity = 113
 
-    c0 = 2000  # bottom of cloud height, m
-    h0 = 5000  # starting height of cloud top of snowflake
-    delta_h = 50  # change in height for updating snow flake
-    T_h0 = -40  # top of cloud T
-    T_c0 = -6  # bottom of cloud T
-    T_0 = -5 * np.random.default_rng().random()  # ground T randomly generated between 0 to -5
+    height_path = np.linspace(max_cloud_height, 0, num=round(max_cloud_height / height_increment) + 1)
+    start_idx = find_nearest(height_path, start_height)
 
-    m_p = 1.67262191E-27  # kg
-    m_h2o = 18 * m_p
-    R = 8.3145  # ideal gas constant
-    k = 1.38064852E-23  # boltzmanconstant
+    temperature_path = generate_temperature_path(ground_temperature, height_increment, max_cloud_height,
+                                                 min_cloud_height, temperature_at_cloud_bottom,
+                                                 temperature_at_cloud_top)
 
-    h = np.linspace(h0, 0, num=round(h0 / delta_h) + 1)
-    T = np.linspace(T_h0, T_c0, num=round((h0 - c0) / delta_h))
-    T = np.append(T, np.linspace(T_c0, T_0, num=round((c0 / delta_h)) + 1))
+    over100RHu, saturation_density_H2O_path = generate_water_saturation_density_path(height_increment, height_path, k,
+                                                                                     m_h2o, max_cloud_height,
+                                                                                     min_cloud_height,
+                                                                                     start_relative_humidity,
+                                                                                     temperature_path)
 
-    startidx = find_nearest(h, starth)
-    # print(startidx)
-    Tnoise = np.random.normal(0, 1, len(T))  # (mean, standard deviation, length)
-    T = T + Tnoise
+    # transform the temperature saturated water density path into growth_record array
+    growth_record = transform_temperature_and_water_density_to_growth_record(saturation_density_H2O_path, start_idx,
+                                                                             temperature_path)
 
-    VP_H2O = (0.0052 * T ** 3 + 0.7445 * T ** 2 + 35.976 * T + 598.87)
-    sinwavperiod = (round((h0 - c0) / delta_h)) * np.random.default_rng().random()
-    RHux = np.linspace(0, (round((h0 - c0) / delta_h)), num=(round((h0 - c0) / delta_h)))
-    RHu = startRHu + 4 * np.sin(RHux / sinwavperiod)
-    RHu_cloudnoise = np.random.normal(0, 1.2, round((h0 - c0) / delta_h))
+    if options != '':
+        return growth_record, temperature_path, over100RHu, start_idx, height_path
+    else:
+        return growth_record
 
-    RHu = RHu + RHu_cloudnoise
-    RHu_0 = np.random.default_rng().random() * 100  # random ground relative humidity between 0 and 100 %
-    RHu_noise = np.random.normal(0, 15, len(h) - len(RHu))
-    RHu = np.append(RHu, np.linspace(RHu[-1], RHu_0, num=(len(h) - len(RHu))))
-    RHu[round((h0 - c0) / delta_h):] += np.random.normal(0, 5, len(h) - len(RHu_cloudnoise))
+
+def transform_temperature_and_water_density_to_growth_record(saturation_density_H2O_path, start_idx, temperature_path):
+    growth_record = [0, 0]
+    for i in range(start_idx, len(temperature_path)):
+        # the line from this graph
+        # https://physics.montana.edu/demonstrations/video/1_mechanics/demos/snowflakegraph.html
+        # formula from fitting 2nd order polynomial to the snowflake shape graph: -0.0005x2 - 0.017x
+        snowflake_shape_line = -0.0004 * temperature_path[i] ** 2 - 0.0164 * temperature_path[i] + 0.0051
+
+        if saturation_density_H2O_path[i] < 0:
+            growth_type_probability_weights = [0, 0, 0, 1]
+
+        elif saturation_density_H2O_path[i] <= snowflake_shape_line:
+            rem = abs(snowflake_shape_line - saturation_density_H2O_path[i] / (snowflake_shape_line))
+            growth_type_probability_weights = [rem, rem / 2, rem ** 3, 0]
+
+        elif saturation_density_H2O_path[i] > snowflake_shape_line:
+            rem = abs(saturation_density_H2O_path[i] - (snowflake_shape_line) / (saturation_density_H2O_path[i]))
+            growth_type_probability_weights = [1 - rem / 2, 1 - rem, rem,
+                                               0]
+
+        growth_type = random.choices(['normal', 'stretch', 'branch', 'none'], weights=growth_type_probability_weights,
+                                     k=1)
+
+        # There is also a random element to growth.
+        # Colder temperatures snow growth a bit higher, and also linear on density of water vapor
+        growth_rate = saturation_density_H2O_path[i] * abs(temperature_path[
+                                                               i]) ** 0.5 * np.random.default_rng().random()
+        growth_record = np.vstack([growth_record, [growth_type, growth_rate]])
+    growth_record = np.delete(growth_record, obj=0, axis=0)  # deletes the initial row of 0s.
+    return growth_record
+
+
+def generate_water_saturation_density_path(height_increment, height_path, k, m_h2o, max_cloud_height, min_cloud_height,
+                                           start_relative_humidity, temperature_path):
+    vapour_pressure_H2O = (
+            0.0052 * temperature_path ** 3 + 0.7445 * temperature_path ** 2 + 35.976 * temperature_path + 598.87)
+    sine_wave_period = (round((max_cloud_height - min_cloud_height) / height_increment)) \
+                       * np.random.default_rng().random()
+    relative_humidity_cloud_path = np.linspace(0, (round((max_cloud_height - min_cloud_height) / height_increment)),
+                                               num=(round((max_cloud_height - min_cloud_height) / height_increment)))
+    relative_humidity_cloud = start_relative_humidity + 4 * np.sin(relative_humidity_cloud_path / sine_wave_period)
+    # add fluctuations to the relative humidity path
+    relative_humidity_noise = np.random.normal(0, 1.2, round((max_cloud_height - min_cloud_height) / height_increment))
+    relative_humidity_cloud = relative_humidity_cloud + relative_humidity_noise
+    # random ground relative humidity between 0 and 100 %
+    ground_relative_humidity = np.random.default_rng().random() * 100
+    RHu_noise = np.random.normal(0, 15, len(height_path) - len(relative_humidity_cloud))
+    relative_humidity_cloud = np.append(relative_humidity_cloud,
+                                        np.linspace(relative_humidity_cloud[-1], ground_relative_humidity,
+                                                    num=(len(height_path) - len(relative_humidity_cloud))))
     # adding noise with a std of 10% relative humidity
+    relative_humidity_cloud[round((max_cloud_height - min_cloud_height) / height_increment):] \
+        += np.random.normal(0, 5, len(height_path) - len(relative_humidity_noise))
+    # stop RH going below 0 (not physically possible)
+    for r in range(0, len(relative_humidity_cloud)):
+        if relative_humidity_cloud[r] < 0:
+            relative_humidity_cloud[r] = 0
+    over100RHu = relative_humidity_cloud - 100 * np.ones(len(relative_humidity_cloud))
+    p_H2O = relative_humidity_cloud * vapour_pressure_H2O / 100  # in Pa
+    saturation_pressure_H2O = over100RHu / 100 * vapour_pressure_H2O
+    # T in K remember, * 1000 makes it into grams
+    density_H2O = m_h2o * p_H2O / (k * (temperature_path + 273.15)) * 1000
+    saturation_density_H2O_path = m_h2o * saturation_pressure_H2O / (k * (temperature_path + 273.15)) * 1000
+    return over100RHu, saturation_density_H2O_path
 
-    for r in range(0, len(RHu)):  # stop RH going below 0
-        if RHu[r] < 0:
-            RHu[r] = 0
-    #    if RHu[r] > 100:
-    #        RHu[r] = 100
 
-    over100RHu = RHu - 100 * np.ones(len(RHu))
-    p_H2O = RHu * VP_H2O / 100  # in Pa
-    sat_p_H2O = over100RHu / 100 * VP_H2O
-    dens_H2O = m_h2o * p_H2O / (k * (T + 273.15)) * 1000  # T in K remember, * 1000 makes it into grams
-    sat_dens_H2O = m_h2o * sat_p_H2O / (k * (T + 273.15)) * 1000
+def generate_temperature_path(ground_temperature, height_increment, max_cloud_height, min_cloud_height,
+                              temperature_at_cloud_bottom, temperature_at_cloud_top):
+    temperature_path = np.linspace(temperature_at_cloud_top, temperature_at_cloud_bottom,
+                                   num=round((max_cloud_height - min_cloud_height) / height_increment))
+    temperature_path = np.append(temperature_path, np.linspace(temperature_at_cloud_bottom, ground_temperature,
+                                                               num=round((min_cloud_height / height_increment)) + 1))
+    # add fluctuation to temperature (noise)
+    temperature_noise = np.random.normal(0, 1, len(temperature_path))
+    temperature_path = temperature_path + temperature_noise
+    return temperature_path
 
-    b = 0
-    growthrecord = [0, 0]
-    for i in range(startidx, len(T)):
-        shape_line = -0.0004 * T[i] ** 2 - 0.0164 * T[i] + 0.0051
-        # print(shape_line)
-        if sat_dens_H2O[i] < 0:
-            growthweights = [0, 0, 0, 1]
-        elif sat_dens_H2O[
-            i] <= shape_line:  # formula from fitting 2nd order polynomial to that figure -0.0005x2 - 0.017x
-            rem = abs(shape_line - sat_dens_H2O[i] / (shape_line))
-            growthweights = [rem, rem / 2, rem ** 3, 0]  # [abs(rem),(abs(rem**3))/3,abs(rem)**12/3,0]
-            # print('below',rem)
-        elif sat_dens_H2O[i] > shape_line:
-            rem = abs(sat_dens_H2O[i] - (shape_line) / (sat_dens_H2O[i]))
-            growthweights = [1 - rem / 2, 1 - rem, rem, 0]  # [abs(rem)**2,abs(rem),(i-b)/(i+1)*abs(rem)**4,0]
-            # print('above',rem)
-            # print('overline')
-        # print(growthweights)
-        growthtype = random.choices(['normal', 'stretch', 'branch', 'none'], weights=growthweights, k=1)
-        # print(growthtype)
-        if growthtype == ['branch']:
-            b = i
-        #   print(b)
-        # print((i-b)/(i+1))
-        growthrate = sat_dens_H2O[i] * abs(T[
-                                               i]) ** 0.5 * np.random.default_rng().random()  # also a random element to growth. Colder temperatures snow growth a bit higher, and also linear on density of water vapor
-        growthrecord = np.vstack([growthrecord, [growthtype, growthrate]])
 
-    growthrecord = np.delete(growthrecord, obj=0, axis=0)  # deletes that initial row of 0s.
-    # print(len(growthrecord[:,]))
+def flake_grower(growth_record, options=''):
+    branch_options = 0  # default
     if options != '':
-        return growthrecord, T, over100RHu, startidx, h
-    else:
-        return growthrecord
-
-
-def flakegrower(growthrecord, options=''):
-    branchopt = 0  # default
-    if options != '':
-        branchopt = options['branchopt']
+        branch_options = options['branchopt']
 
     l = 1
     r = l / 2
@@ -197,14 +226,14 @@ def flakegrower(growthrecord, options=''):
 
     br = 0
 
-    for g in range(0, len(growthrecord[:, ])):
+    for g in range(0, len(growth_record[:, ])):
 
         edge_length = (2 * edge_length4(points_tuple)) ** 0.5
-        area = growthrecord[g, 1] / 6  # /6 because it's doing it on 6 sides
+        area = growth_record[g, 1] / 6  # /6 because it's doing it on 6 sides
         # print(edge_length,area)
-        if growthrecord[g, 0] == ['none']:
+        if growth_record[g, 0] == ['none']:
             pass
-        if growthrecord[g, 0] == ['normal']:
+        if growth_record[g, 0] == ['normal']:
             for e in edge1:
                 normalised_e_vector = e / np.linalg.norm(e)
                 # checks for points (e) with the same direction vector as the original corner point (from origin) then grows it
@@ -226,7 +255,7 @@ def flakegrower(growthrecord, options=''):
                         if np.allclose((e - branch_origin[bra]) / np.linalg.norm(e - branch_origin[bra]),
                                        branchvs[bra] / np.linalg.norm(branchvs[bra]), rtol=1e-05) == True:
                             # advanced mode branches overlapping option is when branchopt == 1
-                            if branchopt != 1 and abs(e[1] + brgrowth * branchvs[bra][1]) > (
+                            if branch_options != 1 and abs(e[1] + brgrowth * branchvs[bra][1]) > (
                                     e[0] + brgrowth ** branchvs[bra][
                                 0]) * 0.42:  # stop the branches from crossing over. (I thought it should be < x*0.577 / tan30 but seems to still cross)
                                 pass
@@ -243,12 +272,12 @@ def flakegrower(growthrecord, options=''):
                         elif edge1[i][1] < 0:
                             edge1[i] += 1.2 * area / edge_length * (np.array((0, -1)))
 
-        if growthrecord[g, 0] == ['stretch']:  # just make it so that only outer corners grow
+        if growth_record[g, 0] == ['stretch']:  # just make it so that only outer corners grow
             for e in edge1:
                 if np.allclose(e / np.linalg.norm(e), corner1 / np.linalg.norm(corner1), rtol=1e-05) == True:
                     e += 0.5 * area * corner1  # stretch the corner points
 
-        if growthrecord[g, 0] == ['branch']:
+        if growth_record[g, 0] == ['branch']:
             for e in range(0, len(edge1)):
                 if np.allclose(edge1[e] / np.linalg.norm(edge1[e]), corner1 / np.linalg.norm(corner1),
                                rtol=1e-05) == True:  # branching off centre line only. can add elifs for branches branching later
@@ -363,12 +392,12 @@ def flake_video(all_flakes_rot, corner1, centre1a, options=''):
     ax.axes.get_xaxis().set_visible(False)
     ax.axes.get_yaxis().set_visible(False)
     snowflake, = ax.plot(x_c, y_c, linewidth=1)
-    #snowflake, = ax.fill_between(x_values, y_values,color=[(0.8,0.9,1)])
+    # snowflake, = ax.fill_between(x_values, y_values,color=[(0.8,0.9,1)])
 
     flakeanimation = animation.FuncAnimation(fig, func=snowflake_animation,
                                              frames=np.arange(0, len(all_flakes_rot), 1),
                                              interval=100, fargs=(
-        all_flakes_rot, snowflake,))  # interval in ms, frames is the i values
+            all_flakes_rot, snowflake,))  # interval in ms, frames is the i values
     # plt.show
     plt.close()
 
@@ -416,7 +445,7 @@ def conditions_video(h, T, over100RHu, startidx):
     othergraphsanimation = animation.FuncAnimation(fig, func=othergraphs_animation,
                                                    frames=np.arange(startidx, len(T), 1), interval=100,
                                                    repeat=True, fargs=(
-        xdata, y1data, y2data, h, T, over100RHu, line1, line2))  # interval in ms, frames is the i values
+            xdata, y1data, y2data, h, T, over100RHu, line1, line2))  # interval in ms, frames is the i values
 
     # to hard save file:
     dt_now = str(datetime.now())

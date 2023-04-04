@@ -8,12 +8,11 @@ Created on Thu Dec 23 17:04:54 2021
 from flask import Flask, request, json, render_template, make_response, send_file
 import base64
 from flask_cors import CORS
-from snowflakebuilder import conditions, flakegrower, flake_video, conditions_video, othergraphs_animation
+from snowflakebuilder import generate_path_conditions, flake_grower, flake_video, conditions_video, othergraphs_animation
 from datetime import datetime
 import os
 import ast
 
-# %%
 
 app = Flask(__name__)
 CORS(app)
@@ -25,12 +24,12 @@ def index():
 
 
 @app.route('/advanced')
-def advancedmode():
+def advanced_mode():
     return render_template('advanced.html')
 
 
 @app.route('/howitworks')
-def howitworks():
+def how_it_works():
     return render_template('howitworks.html')
 
 
@@ -43,27 +42,34 @@ def about():
 def random_flake_api():
     print(f'starting growth at {datetime.now()}')
     if request.method == 'POST':
+        # convert the post data imported in a binary format to a dictionary
+        # (part in brackets converts to a string, ast_lit.. part converts string rep of dictionary to dictionary
         options = ast.literal_eval(request.data.decode(
-            'UTF-8'))  # convert the data imported in a binary format to a dictionary (part in brackets converts to a string, ast_lit.. part converts string rep of dictionary to dictionary
+            'UTF-8'))
         print(options)
 
-        growthcons, T, over100RHu, startidx, h = conditions(options)
+        growth_conditions, T, over100RHu, startidx, h = generate_path_conditions(options)
 
-        flake, corner1, centre1 = flakegrower(growthcons, options)
-        animationfile = flake_video(flake, corner1, centre1, options)
+        flake, corner1, centre1 = flake_grower(growth_conditions, options)
+        animation_file = flake_video(flake, corner1, centre1, options)
 
     else:
-        growthcons = conditions()
-        flake, corner1, centre1 = flakegrower(growthcons)
-        animationfile = flake_video(flake, corner1, centre1)
+        # randomly generate growth conditions
+        growth_conditions = generate_path_conditions()
+        # grow the snowflake - find
+        flake, corner1, centre1 = flake_grower(growth_conditions)
+        # turn the growth
+        animation_file = flake_video(flake, corner1, centre1)
 
     print('flake made, about to send')
 
-    with open(animationfile, 'rb') as f:
+    with open(animation_file, 'rb') as f:
         image_binary = f.read()
     print('binary read in, about to delete file and send binary')
-    os.remove(animationfile)  # delete file after it's been read
 
+    os.remove(animation_file)  # delete file after it's been read
+
+    # send back the snowflake gif
     response = make_response(base64.b64encode(image_binary))
     response.headers.set('Content-Type', 'image/gif')
     response.headers.set('Content-Disposition', 'attachment', filename='image.gif')
@@ -74,20 +80,19 @@ def random_flake_api():
 def adv_graphs_api():
     if request.method == 'POST':
         options = ast.literal_eval(request.data.decode(
-            'UTF-8'))  # convert the data imported in a binary format to a dictionary (part in brackets converts to a string, ast_lit.. part converts string rep of dictionary to dictionary
+            'UTF-8'))
         print(options)
 
-        growthcons, T, over100RHu, startidx, h = conditions(options)
-        flake, corner1, centre1 = flakegrower(growthcons, options)
-        extragraphsfile = conditions_video(h, T, over100RHu, startidx)
+        growthcons, T, over100RHu, startidx, h = generate_path_conditions(options)
+        extra_graphs_file = conditions_video(h, T, over100RHu, startidx)
     else:
         print('no advanced inputs recieved')
 
     print('flake made, about to send')
-    with open(extragraphsfile, 'rb') as f:
+    with open(extra_graphs_file, 'rb') as f:
         image_binary = f.read()
     print('binary read in, about to delete file and send binary')
-    os.remove(extragraphsfile)  # delete file after it's been read
+    os.remove(extra_graphs_file)  # delete file after it's been read
 
     response = make_response(base64.b64encode(image_binary))
     response.headers.set('Content-Type', 'image/gif')
